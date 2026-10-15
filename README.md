@@ -1,6 +1,6 @@
-# Wedding Mandap 3D
+# Grand Panoramic Wedding Stage 3D
 
-An interactive static wedding venue with sunset/evening lighting, camera presets, a floor plan, and a walk-in tour. Three.js and OrbitControls are vendored; Google Fonts is optional.
+An interactive static wedding venue featuring a five-bay floral reception stage, chandeliers, a silver-and-white sofa, sunset/evening lighting, nine camera and tour controls, and a floor plan. Three.js and OrbitControls are vendored; Google Fonts is optional.
 
 ## Run locally
 

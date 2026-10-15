@@ -3,19 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Explore an interactive 3D wedding mandap with sunset and evening lighting, floral details, and a guided venue tour.">
-<title>Wedding Mandap 3D</title>
+<meta name="description" content="Explore an interactive 3D panoramic wedding stage with floral details, chandeliers, sunset and evening lighting, and a guided venue tour.">
+<title>Grand Panoramic Wedding Stage 3D</title>
+<link rel="icon" href="data:,">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Figtree:wght@400;500;600&display=swap">
 <style>
   /* Layout: full-bleed 3D canvas; title top-left, controls right, view bar bottom, floor-plan map bottom-left */
   :root {
-    --bg: #14080c;
-    --panel: rgba(28, 12, 18, 0.78);
-    --line: rgba(255, 190, 110, 0.22);
+    --bg: #0c0814;
+    --panel: rgba(18, 14, 28, 0.80);
+    --line: rgba(240, 195, 130, 0.24);
     --fg: #fbeedd;
-    --muted: #cdb29a;
-    --marigold: #ffa31f;
-    --crimson: #c8102e;
+    --muted: #c9b8d2;
+    --marigold: #f5b642;
+    --crimson: #d43f7d;
     --display: "Marcellus", "Palatino Linotype", Georgia, serif;
     --body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
     color-scheme: dark;
@@ -26,7 +27,7 @@
   canvas { display: block; touch-action: none; }
 
   .panel { position: fixed; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
-  #title { top: calc(env(safe-area-inset-top, 0px) + 12px); left: 16px; padding: 12px 16px; max-width: calc(100vw - 32px); }
+  #title { box-sizing: border-box; top: calc(env(safe-area-inset-top, 0px) + 12px); left: 16px; padding: 12px 16px; max-width: calc(100vw - 450px); }
   #title h1 { margin: 0; font: 400 22px/1.1 var(--display); letter-spacing: 0.02em; color: var(--marigold); }
   #title p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
 
@@ -37,8 +38,8 @@
   #optToggle { display: none; }
 
   button { font: 500 13px var(--body); color: var(--fg); background: rgba(255,255,255,0.07); border: 1px solid var(--line); border-radius: 7px; padding: 8px 12px; cursor: pointer; white-space: nowrap; }
-  button:hover { background: rgba(255,163,31,0.16); }
-  button[aria-pressed="true"], button.active { background: var(--marigold); color: #2a1204; border-color: var(--marigold); }
+  button:hover { background: rgba(245,182,66,0.18); }
+  button[aria-pressed="true"], button.active { background: var(--marigold); color: #241404; border-color: var(--marigold); }
   button:focus-visible, input:focus-visible { outline: 2px solid var(--marigold); outline-offset: 2px; }
 
   #views { left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); display: flex; gap: 6px; padding: 8px; max-width: calc(100vw - 32px); overflow-x: auto; }
@@ -50,7 +51,7 @@
 
   @media (max-width: 720px) {
     #optToggle { display: block; position: fixed; top: calc(env(safe-area-inset-top, 0px) + 12px); right: 16px; }
-    #options { top: calc(env(safe-area-inset-top, 0px) + 56px); }
+    #options { top: calc(env(safe-area-inset-top, 0px) + 56px); max-width: calc(100vw - 60px); max-height: calc(100dvh - 160px); overflow-y: auto; }
     #options.closed { display: none; }
     #title { max-width: calc(100vw - 120px); padding: 8px 12px; }
     #title h1 { font-size: 17px; }
@@ -66,8 +67,8 @@
 <div id="stage3d"></div>
 
 <div id="title" class="panel">
-  <h1>Wedding Mandap</h1>
-  <p>Open lawn at evening glow &middot; drag to look around</p>
+  <h1>Grand Floral Reception Stage</h1>
+  <p>5-bay panoramic backdrop &middot; drag to look around</p>
 </div>
 
 <button id="optToggle" aria-expanded="true">Options</button>
@@ -86,9 +87,11 @@
 <div id="views" class="panel" role="group" aria-label="Camera views">
   <button data-view="overview" class="active">Overview</button>
   <button data-view="entry">From entry</button>
-  <button data-view="guest">Guest seat</button>
-  <button data-view="stage">Mandap close-up</button>
-  <button data-view="canopy">Floral chandelier</button>
+  <button data-view="guest">Aisle view</button>
+  <button data-view="stage">Center sofa</button>
+  <button data-view="leftWing">Left wing</button>
+  <button data-view="rightWing">Right wing</button>
+  <button data-view="canopy">Chandeliers</button>
   <button data-view="top">Floor plan</button>
   <button data-view="tour">Walk-in tour</button>
 </div>
@@ -101,13 +104,13 @@
 (function () {
   "use strict";
 
-  // ---------- Venue dimensions (metres), matching the hand sketch ----------
-  // Hall 32 x 44. Stage at the back (-z), seating in the middle, entry on the left wall near the front (+z).
-  var HALL_W = 32, HALL_D = 44, HALL_H = 10;
-  var STAGE = { x: 0, z: -14, r: 5, h: 0.9 };
+  // ---------- Venue dimensions (metres) ----------
+  // Hall 34 x 44. Wide 5-bay panoramic stage at the back (-z), yellow aisle in the middle, entry on the left wall near the front (+z).
+  var HALL_W = 34, HALL_D = 44, HALL_H = 10;
+  var STAGE = { x: 0, z: -14, w: 22.8, d: 5.4, h: 1.04 };
   var DOOR = { z0: 13.5, z1: 17.5, h: 4.6 };
 
-  var rngSeed = 7;
+  var rngSeed = 19;
   function rnd() { rngSeed |= 0; rngSeed = rngSeed + 0x6D2B79F5 | 0; var t = Math.imul(rngSeed ^ rngSeed >>> 15, 1 | rngSeed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }
   function rr(a, b) { return a + rnd() * (b - a); }
 
@@ -118,24 +121,22 @@
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.8;
+  renderer.toneMappingExposure = 0.85;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   host.appendChild(renderer.domElement);
 
   var scene = new THREE.Scene();
-  var DAY_BG = new THREE.Color(0xb9cfe6), NIGHT_BG = new THREE.Color(0x0a0610);
-  
 
   var camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1500);
   var controls = new THREE.OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.08;
   controls.minDistance = 1.5;
-  controls.maxDistance = 90;
-  controls.maxPolarAngle = Math.PI * 0.51;
+  controls.maxDistance = 95;
+  controls.maxPolarAngle = Math.PI * 0.505;
 
-  // Reflection environments so brass and gold read as metal: one for sunset, one for the evening sky.
+  // Reflection environments for metallic silver sofa carvings, mirrored consoles, and gold chandeliers
   var envSunset, envEvening;
   (function environments() {
     function make(top, hor, ground) {
@@ -149,8 +150,8 @@
       envScene.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ side: THREE.BackSide, vertexColors: true })));
       var pm = new THREE.PMREMGenerator(renderer), t = pm.fromScene(envScene, 0.04).texture; pm.dispose(); return t;
     }
-    envSunset = make(new THREE.Color(0.35, 0.42, 0.62), new THREE.Color(0.9, 0.62, 0.42), new THREE.Color(0.25, 0.3, 0.14));
-    envEvening = make(new THREE.Color(0.03, 0.04, 0.08), new THREE.Color(0.2, 0.11, 0.1), new THREE.Color(0.03, 0.03, 0.025));
+    envSunset = make(new THREE.Color(0.35, 0.42, 0.65), new THREE.Color(0.92, 0.64, 0.48), new THREE.Color(0.25, 0.28, 0.18));
+    envEvening = make(new THREE.Color(0.02, 0.03, 0.08), new THREE.Color(0.18, 0.14, 0.24), new THREE.Color(0.04, 0.04, 0.05));
     scene.environment = envEvening;
   })();
 
@@ -166,74 +167,59 @@
   }
   function std(color, opts) { return new THREE.MeshStandardMaterial(Object.assign({ color: color, roughness: 0.75, metalness: 0.0 }, opts || {})); }
   var dummy = new THREE.Object3D();
-  function setInst(mesh, i, x, y, z, sx, sy, sz, ry) {
-    dummy.position.set(x, y, z); dummy.scale.set(sx, sy, sz); dummy.rotation.set(0, ry || 0, 0); dummy.updateMatrix(); mesh.setMatrixAt(i, dummy.matrix);
+  function setInst(mesh, i, x, y, z, sx, sy, sz, ry, rx, rz) {
+    dummy.position.set(x, y, z);
+    dummy.scale.set(sx, sy, sz);
+    dummy.rotation.set(rx || 0, ry || 0, rz || 0);
+    dummy.updateMatrix();
+    mesh.setMatrixAt(i, dummy.matrix);
   }
   function add(mesh, x, y, z) { mesh.position.set(x, y, z); mesh.castShadow = true; mesh.receiveShadow = true; scene.add(mesh); return mesh; }
 
-  var GOLD = std(0xd9a62a, { metalness: 0.35, roughness: 0.35, emissive: 0x3d2606 });
-  var CRIMSON = std(0x8f0a1f, { roughness: 0.65 });
-  var IVORY = std(0xf4ead8, { roughness: 0.8 });
+  var GOLD = std(0xe5b84b, { metalness: 0.78, roughness: 0.26, emissive: 0x2a1c04 });
+  var SILVER = std(0xd8dde6, { metalness: 0.82, roughness: 0.22 });
+  var CRIMSON = std(0xa81c4d, { roughness: 0.65 });
+  var IVORY = std(0xf7f3eb, { roughness: 0.75 });
 
-  // ---------- Textures ----------
-  var texMarigold = canvasTex(256, 512, function (g, w, h) {
-    g.fillStyle = "#a8130f"; g.fillRect(0, 0, w, h);
-    var cols = ["#ff8a1f", "#ffb31a", "#e5541a", "#ff9f2e", "#d63a14", "#ffc23d"];
-    for (var i = 0; i < 520; i++) {
-      var x = Math.random() * w, y = Math.random() * h, r = 9 + Math.random() * 9;
-      g.fillStyle = cols[(Math.random() * cols.length) | 0];
-      g.beginPath(); g.arc(x, y, r, 0, 6.283); g.fill();
-      g.fillStyle = "rgba(120,20,0,0.35)"; g.beginPath(); g.arc(x, y, r * 0.4, 0, 6.283); g.fill();
-    }
-  });
-  var texPlatformSide = canvasTex(1024, 128, function (g, w, h) {
-    g.fillStyle = "#5d1c2c"; g.fillRect(0, 0, w, h);
-    g.strokeStyle = "#f2e6d0"; g.fillStyle = "#f2e6d0"; g.lineWidth = 3;
-    g.strokeRect(0, 10, w, h - 20);
-    g.lineWidth = 1.5; g.strokeRect(0, 18, w, h - 36);
-    for (var x = 32; x < w; x += 64) {
-      g.beginPath(); g.moveTo(x, 34); g.lineTo(x + 22, 64); g.lineTo(x, 94); g.lineTo(x - 22, 64); g.closePath(); g.stroke();
-      g.beginPath(); g.arc(x, 64, 5, 0, 6.283); g.fill();
-      for (var k = -1; k <= 1; k += 2) { g.beginPath(); g.ellipse(x + k * 40, 64, 14, 6, k * 0.4, 0, 6.283); g.stroke(); }
-    }
-  }, 4, 1);
-  var texPlatformTop = canvasTex(512, 512, function (g, w, h) {
-    g.fillStyle = "#5e1d2a"; g.fillRect(0, 0, w, h);
-    var gr = g.createRadialGradient(w / 2, h / 2, 20, w / 2, h / 2, w / 2);
-    gr.addColorStop(0, "rgba(160,60,60,0.45)"); gr.addColorStop(1, "rgba(0,0,0,0)");
-    g.fillStyle = gr; g.fillRect(0, 0, w, h);
-    g.strokeStyle = "rgba(245,225,190,0.55)"; g.lineWidth = 3;
-    g.beginPath(); g.arc(w / 2, h / 2, w * 0.46, 0, 6.283); g.stroke();
-    g.lineWidth = 1.5; g.beginPath(); g.arc(w / 2, h / 2, w * 0.42, 0, 6.283); g.stroke();
-  });
-  var texFloor = canvasTex(512, 512, function (g, w, h) {
-    g.fillStyle = "#e6dccb"; g.fillRect(0, 0, w, h);
-    for (var i = 0; i < 4000; i++) { g.fillStyle = "rgba(" + (150 + Math.random() * 60 | 0) + ",130,110," + Math.random() * 0.06 + ")"; g.fillRect(Math.random() * w, Math.random() * h, 3, 3); }
-    g.strokeStyle = "rgba(120,95,70,0.35)"; g.lineWidth = 2;
-    g.strokeRect(1, 1, w - 2, h - 2);
-    g.beginPath(); g.moveTo(w / 2, 0); g.lineTo(w / 2, h); g.moveTo(0, h / 2); g.lineTo(w, h / 2); g.strokeStyle = "rgba(120,95,70,0.12)"; g.stroke();
-  }, 11, 15);
-  var texWall = canvasTex(256, 256, function (g, w, h) {
-    for (var x = 0; x < w; x++) {
-      var v = 0.5 + 0.5 * Math.sin(x / w * Math.PI * 2 * 4);
-      var c = (236 + v * 14) | 0;
-      g.fillStyle = "rgb(" + c + "," + (c - 14) + "," + (c - 34) + ")"; g.fillRect(x, 0, 1, h);
-    }
-  });
-
-  // ---------- Open lawn, boundary wall and sky ----------
+  // ---------- Open lawn, boundary wall, geometric venue carpet & sky ----------
   var texGrass = canvasTex(256, 256, function (g, w, h) {
-    g.fillStyle = "#4f7a35"; g.fillRect(0, 0, w, h);
-    for (var i = 0; i < 6000; i++) { var l = 28 + Math.random() * 22; g.fillStyle = "hsla(" + (90 + Math.random() * 25) + ",45%," + l + "%,0.35)"; g.fillRect(Math.random() * w, Math.random() * h, 1.5, 5); }
+    g.fillStyle = "#355828"; g.fillRect(0, 0, w, h);
+    for (var i = 0; i < 6000; i++) { var l = 24 + Math.random() * 20; g.fillStyle = "hsla(" + (92 + Math.random() * 25) + ",42%," + l + "%,0.35)"; g.fillRect(Math.random() * w, Math.random() * h, 1.5, 5); }
   }, 40, 40);
   texGrass.repeat.set(220, 220);
   var lawn = new THREE.Mesh(new THREE.PlaneGeometry(500, 500), std(0xffffff, { map: texGrass, roughness: 1 }));
   lawn.rotation.x = -Math.PI / 2; lawn.receiveShadow = true; scene.add(lawn);
 
-  // low boundary wall around the venue, open at the entry
+  // Patterned hexagonal/geometric banquet carpet covering the venue floor (matching the foreground floor in the photos)
+  var texBanquetCarpet = canvasTex(512, 512, function (g, w, h) {
+    g.fillStyle = "#6c2428"; g.fillRect(0, 0, w, h);
+    var palette = ["#9e332e", "#c95b36", "#d99242", "#e2C496", "#541924", "#7c2c38", "#b5483a"];
+    var rows = 8, cols = 8, cw = w / cols, ch = h / rows;
+    for (var r = 0; r <= rows; r++) {
+      for (var c = 0; c <= cols; c++) {
+        var cx = c * cw + (r % 2 ? cw * 0.5 : 0), cy = r * ch;
+        var rad = cw * 0.56;
+        g.fillStyle = palette[(r * 3 + c * 5) % palette.length];
+        g.beginPath();
+        for (var k = 0; k < 6; k++) {
+          var ang = k * Math.PI / 3 + Math.PI / 6;
+          var px = cx + Math.cos(ang) * rad, py = cy + Math.sin(ang) * rad;
+          if (k === 0) g.moveTo(px, py); else g.lineTo(px, py);
+        }
+        g.closePath(); g.fill();
+        g.strokeStyle = "rgba(245, 220, 185, 0.38)"; g.lineWidth = 2.5; g.stroke();
+        g.fillStyle = palette[(r + c * 2 + 3) % palette.length];
+        g.beginPath(); g.arc(cx, cy, rad * 0.42, 0, Math.PI * 2); g.fill();
+      }
+    }
+  }, 10, 13);
+  var venueCarpet = new THREE.Mesh(new THREE.PlaneGeometry(HALL_W - 0.8, HALL_D - 0.8), std(0xffffff, { map: texBanquetCarpet, roughness: 0.92 }));
+  venueCarpet.rotation.x = -Math.PI / 2; venueCarpet.position.set(0, 0.008, 0); venueCarpet.receiveShadow = true; scene.add(venueCarpet);
+
+  // Low boundary wall around the venue, open at the entry
   (function boundary() {
     var stucco = std(0xefe6d6, { roughness: 0.85 }), capMat = std(0xf8f3ea, { roughness: 0.6 });
-    var hw = HALL_W / 2, hd = HALL_D / 2, H = 0.9;
+    var hw = HALL_W / 2, hd = HALL_D / 2, H = 0.95;
     function seg(x1, z1, x2, z2) {
       var len = Math.hypot(x2 - x1, z2 - z1), cx = (x1 + x2) / 2, cz = (z1 + z2) / 2, ry = Math.atan2(x2 - x1, z2 - z1);
       var w = new THREE.Mesh(new THREE.BoxGeometry(0.35, H, len), stucco); w.rotation.y = ry; add(w, cx, H / 2, cz);
@@ -247,41 +233,41 @@
     }
     seg(-hw, -hd, hw, -hd); seg(hw, -hd, hw, hd); seg(hw, hd, -hw, hd);
     seg(-hw, hd, -hw, DOOR.z1); seg(-hw, DOOR.z0, -hw, -hd);
-    for (var x = -hw; x <= hw; x += 4) { pier(x, -hd); pier(x, hd); }
-    for (var z = -hd + 4; z < hd; z += 4) { pier(hw, z); if (z < DOOR.z0 - 0.5 || z > DOOR.z1 + 0.5) pier(-hw, z); }
+    for (var x = -hw; x <= hw; x += 4.25) { pier(x, -hd); pier(x, hd); }
+    for (var z = -hd + 4.4; z < hd; z += 4.4) { pier(hw, z); if (z < DOOR.z0 - 0.5 || z > DOOR.z1 + 0.5) pier(-hw, z); }
   })();
 
   (function trees() {
-    var tm = std(0x2c5a2a, { roughness: 1 }), trunk = std(0x5b3a22);
-    for (var i = 0; i < 26; i++) {
-      var side = i % 2 ? 1 : -1, z = -30 + Math.floor(i / 2) * 5 + rr(-1, 1), x = side * rr(20, 26);
-      var t = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 2.2, 6), trunk); add(t, x, 1.1, z);
-      var c = new THREE.Mesh(new THREE.SphereGeometry(rr(1.6, 2.4), 10, 8), tm); add(c, x, 3.6, z);
+    var tm = std(0x234922, { roughness: 1 }), trunk = std(0x4e321d);
+    for (var i = 0; i < 28; i++) {
+      var side = i % 2 ? 1 : -1, z = -30 + Math.floor(i / 2) * 4.8 + rr(-1, 1), x = side * rr(21, 28);
+      var t = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 2.4, 6), trunk); add(t, x, 1.2, z);
+      var c = new THREE.Mesh(new THREE.SphereGeometry(rr(1.7, 2.5), 10, 8), tm); add(c, x, 3.8, z);
     }
   })();
 
-  // entry arch on the left, where the arrow in the sketch points in
+  // Entry arch on the left with pink, white & blue floral header matching the stage
   (function entryArch() {
-    var zA = DOOR.z0, zB = DOOR.z1, x = -HALL_W / 2, h = 3.8;
-    add(new THREE.Mesh(new THREE.BoxGeometry(0.5, h, 0.5), CRIMSON), x, h / 2, zA);
-    add(new THREE.Mesh(new THREE.BoxGeometry(0.5, h, 0.5), CRIMSON), x, h / 2, zB);
-    add(new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.5, zB - zA + 1), CRIMSON), x, h + 0.25, (zA + zB) / 2);
-    add(new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.1, zB - zA + 1), GOLD), x, h - 0.05, (zA + zB) / 2);
-    var n = 30 * 7, im = new THREE.InstancedMesh(new THREE.SphereGeometry(0.07, 7, 5), std(0xffffff, { roughness: 0.9 }), n), c = new THREE.Color(), q = 0;
-    for (var i = 0; i < 30; i++) {
-      var zz = zA - 0.3 + (zB - zA + 0.6) * i / 29, len = 4 + (rnd() * 3 | 0);
-      for (var j = 0; j < 7; j++) {
-        if (j >= len) { setInst(im, q, 0, -9, 0, 0.001, 0.001, 0.001); q++; continue; }
-        setInst(im, q, x + rr(-0.03, 0.03), h - 0.25 - j * 0.14, zz, 1, 0.85, 1);
-        c.set([0xe8700f, 0xf5a21a, 0xd2490d][(rnd() * 3) | 0]); im.setColorAt(q, c); q++;
-      }
+    var zA = DOOR.z0, zB = DOOR.z1, x = -HALL_W / 2, h = 3.9;
+    add(new THREE.Mesh(new THREE.BoxGeometry(0.5, h, 0.5), IVORY), x, h / 2, zA);
+    add(new THREE.Mesh(new THREE.BoxGeometry(0.5, h, 0.5), IVORY), x, h / 2, zB);
+    add(new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.52, zB - zA + 1), IVORY), x, h + 0.25, (zA + zB) / 2);
+    add(new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.1, zB - zA + 1), GOLD), x, h - 0.05, (zA + zB) / 2);
+    var n = 160, im = new THREE.InstancedMesh(new THREE.SphereGeometry(0.14, 7, 6), std(0xffffff, { roughness: 0.8 }), n), c = new THREE.Color();
+    var cols = [0xf4dce6, 0xec6aa0, 0xc82368, 0x62b4f5, 0xffffff];
+    for (var i = 0; i < n; i++) {
+      var zz = zA - 0.4 + (zB - zA + 0.8) * rnd();
+      var yy = h + rr(-0.1, 0.48);
+      var xx = x + rr(-0.38, 0.38);
+      setInst(im, i, xx, yy, zz, rr(0.8, 1.3), rr(0.8, 1.2), rr(0.8, 1.3));
+      c.setHex(cols[(rnd() * cols.length) | 0]); im.setColorAt(i, c);
     }
     scene.add(im);
   })();
 
-  // sky dome with the sun setting behind the stage
+  // Sky dome with sunset / night transition
   var sunDir = new THREE.Vector3(-0.12, 0.09, -1).normalize();
-  var skyU = { uDusk: { value: 0 }, uSun: { value: sunDir.clone() } };
+  var skyU = { uDusk: { value: 1 }, uSun: { value: sunDir.clone() } };
   var sky = new THREE.Mesh(new THREE.SphereGeometry(500, 48, 24), new THREE.ShaderMaterial({
     side: THREE.BackSide, depthWrite: false, fog: false, uniforms: skyU,
     vertexShader: "varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }",
@@ -289,23 +275,23 @@
       "varying vec3 vD; uniform float uDusk; uniform vec3 uSun;",
       "void main(){",
       "  vec3 d = normalize(vD); float h = clamp(d.y, 0.0, 1.0);",
-      "  vec3 zen = mix(vec3(0.22,0.33,0.58), vec3(0.047,0.078,0.157), uDusk);",
-      "  vec3 mid = mix(vec3(0.93,0.52,0.42), vec3(0.12,0.09,0.20), uDusk);",
-      "  vec3 hor = mix(vec3(1.00,0.72,0.36), vec3(0.30,0.15,0.20), uDusk);",
+      "  vec3 zen = mix(vec3(0.22,0.33,0.58), vec3(0.025,0.035,0.075), uDusk);",
+      "  vec3 mid = mix(vec3(0.93,0.52,0.42), vec3(0.06,0.05,0.12), uDusk);",
+      "  vec3 hor = mix(vec3(1.00,0.72,0.36), vec3(0.14,0.09,0.18), uDusk);",
       "  vec3 c = mix(hor, mid, smoothstep(0.0, 0.18, h));",
       "  c = mix(c, zen, smoothstep(0.12, 0.8, h));",
       "  float s = max(dot(d, uSun), 0.0);",
-      "  c += vec3(1.0,0.62,0.25) * pow(s, 8.0) * mix(0.9, 0.18, uDusk);",
+      "  c += vec3(1.0,0.62,0.25) * pow(s, 8.0) * mix(0.9, 0.12, uDusk);",
       "  c += vec3(1.0,0.85,0.55) * pow(s, 120.0) * 0.9 * (1.0 - uDusk);",
       "  c += vec3(1.0,0.95,0.8) * smoothstep(0.9993, 0.9998, s) * (1.0 - uDusk);",
-      "  if (d.y < 0.0) c = mix(hor * 0.9, mix(vec3(0.35,0.28,0.34), vec3(0.07,0.047,0.11), uDusk), clamp(-d.y * 6.0, 0.0, 1.0));",
+      "  if (d.y < 0.0) c = mix(hor * 0.9, mix(vec3(0.35,0.28,0.34), vec3(0.04,0.03,0.07), uDusk), clamp(-d.y * 6.0, 0.0, 1.0));",
       "  gl_FragColor = vec4(c, 1.0);",
       "}"
     ].join("\n")
   }));
   scene.add(sky);
 
-  // sunset clouds
+  // Sunset clouds
   var cloudMats = [];
   (function distant() {
     var cloud = canvasTex(256, 64, function (g) { var gr = g.createRadialGradient(128, 32, 4, 128, 32, 128); gr.addColorStop(0, "rgba(255,170,120,0.8)"); gr.addColorStop(1, "rgba(255,150,110,0)"); g.save(); g.scale(1, 0.25); g.fillStyle = gr; g.fillRect(0, 0, 256, 256); g.restore(); });
@@ -315,42 +301,78 @@
     }
   })();
 
-  // ---------- Aisle carpet and aisle petals ----------
-  (function aisle() {
-    var carpet = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 24.4), std(0x7d0c1d, { roughness: 1 }));
-    carpet.rotation.x = -Math.PI / 2; carpet.position.set(0, 0.012, 14 - 12.2 + 0.0); carpet.position.z = 1.8; carpet.receiveShadow = true; scene.add(carpet);
-    // gold edging
-    [-1.3, 1.3].forEach(function (x) {
-      var e = new THREE.Mesh(new THREE.PlaneGeometry(0.1, 24.4), std(0xd9a62a, { roughness: 0.6 }));
-      e.rotation.x = -Math.PI / 2; e.position.set(x, 0.014, 1.8); scene.add(e);
-    });
-    // marigold line along the aisle
-    var n = 2 * 33;
-    var geo = new THREE.SphereGeometry(0.11, 8, 6);
-    var im = new THREE.InstancedMesh(geo, std(0xffffff, { roughness: 0.8 }), n);
-    var col = new THREE.Color(); var i = 0;
-    [-1.55, 1.55].forEach(function (x) {
-      for (var k = 0; k < 33; k++) {
-        setInst(im, i, x + rr(-0.07, 0.07), 0.1, 13.5 - k * 0.64 + rr(-0.1, 0.1), 1, 0.8, 1);
-        col.set(k % 4 === 3 ? 0xffffff : (k % 2 ? 0xff8a1f : 0xffb31a)); im.setColorAt(i, col); i++;
+  // ---------- Golden-Yellow Aisle Runner & Blue/Pink/White Floral Hedges ----------
+  (function aisleAndFloralHedges() {
+    var aisleZ0 = -10.55, aisleZ1 = 16.8, aisleLen = aisleZ1 - aisleZ0, aisleCenterZ = (aisleZ0 + aisleZ1) / 2;
+    var texYellowRunner = canvasTex(512, 1024, function (g, w, h) {
+      var gr = g.createLinearGradient(0, 0, w, 0);
+      gr.addColorStop(0, "#c59612"); gr.addColorStop(0.5, "#e2b422"); gr.addColorStop(1, "#c59612");
+      g.fillStyle = gr; g.fillRect(0, 0, w, h);
+      // Horizontal panel seam lines clearly visible on the yellow aisle runner in the photos
+      for (var y = 64; y < h; y += 110) {
+        g.fillStyle = "rgba(110, 78, 6, 0.42)"; g.fillRect(0, y, w, 3);
+        g.fillStyle = "rgba(255, 232, 130, 0.35)"; g.fillRect(0, y + 3, w, 2);
       }
+    }, 1, 3);
+
+    var carpet = new THREE.Mesh(new THREE.PlaneGeometry(3.4, aisleLen), std(0xffffff, { map: texYellowRunner, roughness: 0.46, metalness: 0.08 }));
+    carpet.rotation.x = -Math.PI / 2; carpet.position.set(0, 0.016, aisleCenterZ); carpet.receiveShadow = true; scene.add(carpet);
+
+    // Dense low floral hedges along both sides of the yellow aisle (icy blue hydrangeas, white roses, blush pink & deep magenta accents)
+    var foliageBaseMat = std(0x284e3a, { roughness: 0.9 });
+    [-1.82, 1.82].forEach(function (hx) {
+      var baseStrip = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.22, aisleLen), foliageBaseMat);
+      baseStrip.position.set(hx, 0.11, aisleCenterZ); baseStrip.castShadow = true; baseStrip.receiveShadow = true; scene.add(baseStrip);
     });
-    im.castShadow = true; scene.add(im);
+
+    var bloomCount = 1900;
+    var bloomGeo = new THREE.DodecahedronGeometry(0.115, 1);
+    var bloomInst = new THREE.InstancedMesh(bloomGeo, std(0xffffff, { roughness: 0.68 }), bloomCount);
+    var leafGeo = new THREE.ConeGeometry(0.08, 0.28, 5);
+    var leafInst = new THREE.InstancedMesh(leafGeo, std(0x4888a8, { roughness: 0.75 }), 700);
+    var col = new THREE.Color();
+    // Palette dominated by sky-blue/cyan hydrangeas, white, soft pink, and deep magenta-purple just like the photos
+    var aislePalette = [
+      0x49b6ff, 0x68c6ff, 0x3298e8, 0x8ad6ff, // icy / sky blue blooms
+      0xf7f9fc, 0xfff5f8,                     // crisp white
+      0xf29bc2, 0xe06098,                     // rose pink
+      0x6b1d5c, 0x9c2468                      // deep purple / magenta accents
+    ];
+    for (var i = 0; i < bloomCount; i++) {
+      var side = i % 2 === 0 ? -1 : 1;
+      var zPos = aisleZ0 + rnd() * aisleLen;
+      var xPos = side * (1.82 + rr(-0.34, 0.34));
+      var yPos = 0.12 + rr(0, 0.28) * (1 - Math.abs(xPos - side * 1.82) * 1.2);
+      setInst(bloomInst, i, xPos, Math.max(0.09, yPos), zPos, rr(0.75, 1.45), rr(0.7, 1.25), rr(0.75, 1.45), rnd() * 6.28, rr(-0.4, 0.4), rr(-0.4, 0.4));
+      col.setHex(aislePalette[(rnd() * aislePalette.length) | 0]).convertSRGBToLinear();
+      bloomInst.setColorAt(i, col);
+    }
+    for (var j = 0; j < 700; j++) {
+      var s2 = j % 2 === 0 ? -1 : 1;
+      var lz = aisleZ0 + rnd() * aisleLen;
+      var lx = s2 * (1.82 + rr(-0.38, 0.38));
+      var ly = 0.18 + rr(0, 0.24);
+      setInst(leafInst, j, lx, ly, lz, rr(0.8, 1.3), rr(0.9, 1.4), rr(0.8, 1.3), rnd() * 6.28, rr(-0.9, 0.9), rr(-0.9, 0.9));
+      col.setHex(j % 3 === 0 ? 0x2d6840 : 0x5ab2e6).convertSRGBToLinear();
+      leafInst.setColorAt(j, col);
+    }
+    bloomInst.castShadow = true; bloomInst.receiveShadow = true; scene.add(bloomInst);
+    leafInst.castShadow = true; scene.add(leafInst);
   })();
 
-  // ---------- Guest seating ----------
+  // ---------- Guest Seating (flanking the yellow aisle) ----------
   (function seating() {
-    var cols = 6, rows = 10, blocks = 2, n = cols * rows * blocks;
-    var seat = new THREE.InstancedMesh(new THREE.BoxGeometry(0.5, 0.07, 0.5), IVORY, n);
-    var backr = new THREE.InstancedMesh(new THREE.BoxGeometry(0.5, 0.62, 0.05), GOLD, n);
+    var cols = 6, rows = 9, blocks = 2, n = cols * rows * blocks;
+    var seat = new THREE.InstancedMesh(new THREE.BoxGeometry(0.52, 0.07, 0.52), IVORY, n);
+    var backr = new THREE.InstancedMesh(new THREE.BoxGeometry(0.52, 0.64, 0.05), GOLD, n);
     var legs = new THREE.InstancedMesh(new THREE.BoxGeometry(0.04, 0.46, 0.04), GOLD, n * 4);
-    var sash = new THREE.InstancedMesh(new THREE.BoxGeometry(0.12, 0.5, 0.03), CRIMSON, n);
+    var sash = new THREE.InstancedMesh(new THREE.BoxGeometry(0.14, 0.5, 0.03), std(0x62a8e5, { roughness: 0.6 }), n);
     var i = 0, l = 0;
     for (var b = 0; b < blocks; b++) {
       var sgn = b === 0 ? -1 : 1;
       for (var r = 0; r < rows; r++) {
         for (var c = 0; c < cols; c++) {
-          var x = sgn * (2.3 + c * 1.05), z = -2 + r * 1.25;
+          var x = sgn * (3.2 + c * 1.15), z = -1.5 + r * 1.35;
           setInst(seat, i, x, 0.48, z, 1, 1, 1);
           setInst(backr, i, x, 0.82, z + 0.235, 1, 1, 1);
           setInst(sash, i, x, 0.46, z + 0.27, 1, 1, 1);
@@ -362,457 +384,728 @@
     [seat, backr, legs, sash].forEach(function (m) { m.castShadow = true; m.receiveShadow = true; scene.add(m); });
   })();
 
-  // ---------- Mandap (the couple's design, placed on the stage spot from the sketch) ----------
-  // Local coordinates: stage centred on the origin, front steps toward +z.
+  // ---------- GRAND 5-BAY PANORAMIC WEDDING STAGE ----------
   var PZ = STAGE.z;
   var M = new THREE.Group(); M.position.set(STAGE.x, 0, PZ); scene.add(M);
-  var chandelierStrands = [], bellStrands = [], swayingFoliage = [], havanFlames = [], lampLights = [], havanLight;
-  var MSTAGE_H = 1.16, MPILLAR_H = 6.35, MCANOPY_Y = MSTAGE_H + MPILLAR_H;
+  var MSTAGE_W = STAGE.w, MSTAGE_D = STAGE.d, MSTAGE_H = STAGE.h;
+  var chandelierSwings = [], stageGlowLights = [];
 
-  function mTex(canvas, rx, ry, clampT) {
-    var t = new THREE.CanvasTexture(canvas);
-    t.encoding = THREE.sRGBEncoding; t.anisotropy = 8;
-    t.wrapS = THREE.RepeatWrapping; t.wrapT = clampT ? THREE.ClampToEdgeWrapping : THREE.RepeatWrapping;
-    t.repeat.set(rx || 1, ry || 1);
-    return t;
-  }
-  function mCanvas(w, h) { var c = document.createElement("canvas"); c.width = w; c.height = h; return c; }
-
-  // Maroon stage floor with a grid of white four-pointed stars
-  function createStageFloorTexture() {
-    var c = mCanvas(1024, 1024), ctx = c.getContext("2d");
-    ctx.fillStyle = "#5e2f3e"; ctx.fillRect(0, 0, 1024, 1024);
-    for (var i = 0; i < 18000; i++) { ctx.fillStyle = i % 2 === 0 ? "rgba(255,255,255,0.015)" : "rgba(0,0,0,0.025)"; ctx.fillRect(Math.random() * 1024, Math.random() * 1024, 2, 2); }
-    var stepX = 1024 / 10, stepY = 1024 / 10;
-    ctx.fillStyle = "#f5ebe6";
-    for (var r = 0; r < 10; r++) for (var col = 0; col < 10; col++) {
-      var cx = (col + 0.5) * stepX, cy = (r + 0.5) * stepY, size = 11;
-      ctx.beginPath(); ctx.moveTo(cx, cy - size);
-      ctx.quadraticCurveTo(cx + 2.5, cy - 2.5, cx + size, cy); ctx.quadraticCurveTo(cx + 2.5, cy + 2.5, cx, cy + size);
-      ctx.quadraticCurveTo(cx - 2.5, cy + 2.5, cx - size, cy); ctx.quadraticCurveTo(cx - 2.5, cy - 2.5, cx, cy - size); ctx.fill();
-      var d = 5; ctx.fillRect(cx - d, cy - d, 2, 2); ctx.fillRect(cx + d - 2, cy - d, 2, 2); ctx.fillRect(cx - d, cy + d - 2, 2, 2); ctx.fillRect(cx + d - 2, cy + d - 2, 2, 2);
+  // Shared procedural textures for the stage
+  // 1. Light-blue pleated satin skirting along the front & sides of the stage
+  var texBlueSkirt = canvasTex(1024, 256, function (g, w, h) {
+    for (var x = 0; x < w; x++) {
+      var pleat = Math.sin(x / w * Math.PI * 2 * 48);
+      var pleat2 = Math.cos(x / w * Math.PI * 2 * 16);
+      var shade = 0.5 + 0.35 * pleat + 0.15 * pleat2;
+      var r = (92 + shade * 55) | 0;
+      var gr = (152 + shade * 62) | 0;
+      var b = (212 + shade * 42) | 0;
+      g.fillStyle = "rgb(" + r + "," + gr + "," + b + ")";
+      g.fillRect(x, 0, 1, h);
     }
-    return mTex(c, 1.5, 1.3);
-  }
+    // Top gathered header shadow & bottom hem highlight
+    var topGr = g.createLinearGradient(0, 0, 0, h);
+    topGr.addColorStop(0, "rgba(15, 35, 70, 0.45)");
+    topGr.addColorStop(0.12, "rgba(0, 0, 0, 0)");
+    topGr.addColorStop(0.88, "rgba(0, 0, 0, 0)");
+    topGr.addColorStop(1, "rgba(10, 25, 55, 0.4)");
+    g.fillStyle = topGr; g.fillRect(0, 0, w, h);
+  }, 4, 1);
 
-  // White kolam stencil on the maroon stage sides
-  function createStageSideKolamTexture() {
-    var c = mCanvas(1024, 256), ctx = c.getContext("2d");
-    ctx.fillStyle = "#582534"; ctx.fillRect(0, 0, 1024, 256);
-    ctx.strokeStyle = "#f8efe6"; ctx.fillStyle = "#f8efe6"; ctx.lineWidth = 3;
-    ctx.fillRect(0, 8, 1024, 5); ctx.fillRect(0, 20, 1024, 3); ctx.fillRect(0, 52, 1024, 3);
-    ctx.fillRect(0, 204, 1024, 3); ctx.fillRect(0, 234, 1024, 3); ctx.fillRect(0, 244, 1024, 5);
-    for (var x = 16; x < 1024; x += 32) {
-      [36, 219].forEach(function (y) {
-        ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = "#582534"; ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = "#f8efe6";
+  // 2. Terracotta / red-orange patterned stage top carpet
+  var texStageCarpet = canvasTex(1024, 512, function (g, w, h) {
+    g.fillStyle = "#b8432e"; g.fillRect(0, 0, w, h);
+    for (var y = 0; y < h; y += 48) {
+      g.fillStyle = "rgba(235, 185, 135, 0.28)"; g.fillRect(0, y, w, 10);
+      g.fillStyle = "rgba(120, 28, 18, 0.35)"; g.fillRect(0, y + 20, w, 8);
+    }
+    g.strokeStyle = "rgba(245, 210, 170, 0.32)"; g.lineWidth = 3;
+    for (var x = 32; x < w; x += 96) {
+      g.strokeRect(x, 16, 64, h - 32);
+    }
+  }, 4, 2);
+
+  // 3. Sheer vertical pleated ivory/white backdrop curtains
+  var texWhiteCurtain = canvasTex(512, 512, function (g, w, h) {
+    for (var x = 0; x < w; x++) {
+      var fold = 0.5 + 0.5 * Math.sin(x / w * Math.PI * 2 * 22);
+      var c = (232 + fold * 22) | 0;
+      g.fillStyle = "rgb(" + c + "," + (c - 3) + "," + (c - 9) + ")";
+      g.fillRect(x, 0, 1, h);
+    }
+  }, 2, 1);
+
+  // Helper to populate lush 3D flower clusters (cornices, diagonal pillar swags, table centerpieces, wall medallions)
+  var flowerCloudMeshes = [];
+  var flowerBoxList = []; // collects flower descriptors for instanced rendering
+  function addFloralVolume(cx, cy, cz, sx, sy, sz, count, rotZ, paletteType) {
+    for (var i = 0; i < count; i++) {
+      var lx = (rnd() - 0.5) * sx;
+      var ly = (rnd() - 0.5) * sy;
+      var lz = (rnd() - 0.5) * sz;
+      // Rotate in XY plane by rotZ for diagonal pillar swags
+      var cosZ = Math.cos(rotZ || 0), sinZ = Math.sin(rotZ || 0);
+      var rx = lx * cosZ - ly * sinZ;
+      var ry = lx * sinZ + ly * cosZ;
+      flowerBoxList.push({
+        x: cx + rx,
+        y: cy + ry,
+        z: cz + lz,
+        s: rr(0.75, 1.38),
+        p: paletteType || "stage"
       });
     }
-    var segW = 128;
-    for (var i = 0; i < 8; i++) {
-      var cx = i * segW + segW * 0.5, cy = 135;
-      for (var a = -3; a <= 3; a++) { ctx.save(); ctx.translate(cx, cy + 28); ctx.rotate(a * 0.34); ctx.beginPath(); ctx.ellipse(0, -28, 7, 22, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
-      ctx.fillStyle = "#582534"; ctx.beginPath(); ctx.arc(cx, cy + 20, 11, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = "#f8efe6"; ctx.beginPath(); ctx.arc(cx, cy + 20, 5, 0, Math.PI * 2); ctx.fill();
-      ctx.lineWidth = 3.5; ctx.beginPath(); ctx.arc(cx, cy + 12, 46, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
-      var sx = i * segW, sy = 96;
-      ctx.beginPath(); ctx.moveTo(sx, sy - 14); ctx.lineTo(sx + 10, sy); ctx.lineTo(sx, sy + 14); ctx.lineTo(sx - 10, sy); ctx.closePath(); ctx.fill();
-    }
-    return mTex(c, 2.5, 1, true);
   }
 
-  // Dense orange and red marigold wrapping for the pillars
-  function createMarigoldTexture() {
-    var c = mCanvas(512, 512), ctx = c.getContext("2d");
-    ctx.fillStyle = "#8c1d0b"; ctx.fillRect(0, 0, 512, 512);
-    var colors = ["#ff7b00", "#ff9505", "#e85d04", "#d00000", "#9d0208", "#ffaa00", "#dc2f02"];
-    for (var i = 0; i < 3200; i++) {
-      var x = Math.random() * 512, y = Math.random() * 512, r = 5 + Math.random() * 7;
-      ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)]; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = "rgba(255, 215, 80, 0.35)"; ctx.beginPath(); ctx.arc(x - 1.5, y - 1.5, r * 0.55, 0, Math.PI * 2); ctx.fill();
-    }
-    return mTex(c, 2, 6);
-  }
-
-  function createBrocadeTexture(baseHex, motifHex) {
-    var c = mCanvas(256, 256), ctx = c.getContext("2d");
-    ctx.fillStyle = baseHex; ctx.fillRect(0, 0, 256, 256);
-    ctx.strokeStyle = motifHex; ctx.fillStyle = motifHex; ctx.lineWidth = 2;
-    for (var y = 0; y < 256; y += 32) for (var x = 0; x < 256; x += 32) {
-      ctx.beginPath(); ctx.moveTo(x + 16, y); ctx.lineTo(x + 32, y + 16); ctx.lineTo(x + 16, y + 32); ctx.lineTo(x, y + 16); ctx.closePath(); ctx.stroke();
-      ctx.beginPath(); ctx.arc(x + 16, y + 16, 4, 0, Math.PI * 2); ctx.fill();
-    }
-    return mTex(c, 1, 1);
-  }
-
-  function buildMandapStageAndSteps() {
+  // 1. Build Stage Platform, Blue Pleated Skirting, Center 3-Step Stairs, Front Floral Troughs & Monitors
+  function buildStagePlatformAndFrontDetails() {
     var g = new THREE.Group();
-    var stageW = 10.6, stageD = 8.4, stageH = MSTAGE_H;
-    var topMat = new THREE.MeshStandardMaterial({ map: createStageFloorTexture(), roughness: 0.65, metalness: 0.05 });
-    var sideMat = new THREE.MeshStandardMaterial({ map: createStageSideKolamTexture(), roughness: 0.6, metalness: 0.05 });
-    var stageMesh = new THREE.Mesh(new THREE.BoxGeometry(stageW, stageH, stageD), [sideMat, sideMat, topMat, sideMat, sideMat, sideMat]);
-    stageMesh.position.set(0, stageH / 2, 0); stageMesh.castShadow = true; stageMesh.receiveShadow = true; g.add(stageMesh);
+    var topMat = std(0xffffff, { map: texStageCarpet, roughness: 0.78 });
+    var skirtMat = std(0xffffff, { map: texBlueSkirt, bumpMap: texBlueSkirt, bumpScale: 0.03, roughness: 0.48, metalness: 0.08 });
+    var stageMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(MSTAGE_W, MSTAGE_H, MSTAGE_D),
+      [skirtMat, skirtMat, topMat, skirtMat, skirtMat, skirtMat]
+    );
+    stageMesh.position.set(0, MSTAGE_H / 2, 0);
+    stageMesh.castShadow = true; stageMesh.receiveShadow = true;
+    g.add(stageMesh);
 
-    var trimMat = new THREE.MeshStandardMaterial({ color: 0xf6efe9, roughness: 0.5 });
-    var frontTrim = new THREE.Mesh(new THREE.BoxGeometry(stageW + 0.04, 0.05, 0.06), trimMat); frontTrim.position.set(0, stageH - 0.02, stageD / 2); g.add(frontTrim);
-    var leftTrim = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.05, stageD + 0.04), trimMat); leftTrim.position.set(-stageW / 2, stageH - 0.02, 0); g.add(leftTrim);
-    var rightTrim = leftTrim.clone(); rightTrim.position.x = stageW / 2; g.add(rightTrim);
+    // Subtle top edge lip
+    var lipMat = std(0xd8e8f8, { roughness: 0.5 });
+    var frontLip = new THREE.Mesh(new THREE.BoxGeometry(MSTAGE_W + 0.06, 0.04, 0.08), lipMat);
+    frontLip.position.set(0, MSTAGE_H - 0.01, MSTAGE_D / 2); g.add(frontLip);
 
-    var redStepMat = new THREE.MeshStandardMaterial({ color: 0xa8132b, roughness: 0.78, metalness: 0.04 });
-    // centre curved steps
-    for (var i = 0; i < 4; i++) {
-      var stepH = (stageH / 4) * (4 - i);
-      var step = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, stepH, 40, 1, false, -Math.PI / 2, Math.PI), redStepMat);
-      step.scale.set(2.75 + i * 0.42, 1, 0.75 + i * 0.42);
-      step.position.set(0, stepH / 2, stageD / 2 - 0.05); step.castShadow = true; step.receiveShadow = true; g.add(step);
+    // Center 3-step dark metal & blue-carpeted staircase leading up to the central Maharaja sofa
+    var stairW = 2.15, stairD = 0.34, stairFrameMat = std(0x18202c, { roughness: 0.4, metalness: 0.6 });
+    var treadMat = std(0x5292d4, { roughness: 0.65 });
+    var stairs = new THREE.Group();
+    stairs.position.set(0, 0, MSTAGE_D / 2);
+    for (var s = 0; s < 3; s++) {
+      var stepH = (MSTAGE_H / 3) * (3 - s);
+      var zOff = 0.17 + s * stairD;
+      var stepBox = new THREE.Mesh(new THREE.BoxGeometry(stairW, stepH, stairD), treadMat);
+      stepBox.position.set(0, stepH / 2, zOff);
+      stepBox.castShadow = true; stepBox.receiveShadow = true;
+      stairs.add(stepBox);
+      // Dark steel rectangular front frame trim visible in the center photo
+      var railTop = new THREE.Mesh(new THREE.BoxGeometry(stairW + 0.04, 0.04, 0.04), stairFrameMat);
+      railTop.position.set(0, stepH, zOff + stairD / 2); stairs.add(railTop);
     }
-    // straight side steps at the front corners
-    [-4.15, 4.15].forEach(function (sx) {
-      for (var s = 0; s < 4; s++) {
-        var sh = (stageH / 4) * (4 - s);
-        var b = new THREE.Mesh(new THREE.BoxGeometry(1.65, sh, 0.42), redStepMat);
-        b.position.set(sx, sh / 2, stageD / 2 + 0.21 + s * 0.42); b.castShadow = true; b.receiveShadow = true; g.add(b);
-      }
+    [-stairW / 2, stairW / 2].forEach(function (sx) {
+      var sidePost = new THREE.Mesh(new THREE.BoxGeometry(0.05, MSTAGE_H, stairD * 3 + 0.05), stairFrameMat);
+      sidePost.position.set(sx, MSTAGE_H / 2, (stairD * 3) / 2); stairs.add(sidePost);
     });
+    g.add(stairs);
+
+    // Front-edge floral runners (left & right wing front edges, with white, yellow, pink & purple blooms)
+    [-6.6, 6.6].forEach(function (fx) {
+      var trough = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.18, 0.35), std(0x234228, { roughness: 0.9 }));
+      trough.position.set(fx, MSTAGE_H + 0.09, MSTAGE_D / 2 - 0.22);
+      g.add(trough);
+      addFloralVolume(fx, MSTAGE_H + 0.18, MSTAGE_D / 2 - 0.12, 2.75, 0.48, 0.55, 120, 0, "frontTrough");
+    });
+
+    // Black stage monitor speakers & par-can uplights along the front edge
+    var blackMetal = std(0x18181c, { roughness: 0.45, metalness: 0.4 });
+    [-4.9, -2.55, 2.45, 4.4].forEach(function (mx, idx) {
+      var mon = new THREE.Mesh(new THREE.BoxGeometry(idx % 2 === 0 ? 0.65 : 0.36, 0.42, 0.34), blackMetal);
+      mon.position.set(mx, MSTAGE_H + 0.21, MSTAGE_D / 2 - 0.32);
+      mon.castShadow = true; g.add(mon);
+    });
+
+    // Foreground tripod light/camera stands on left and right (visible in the left & right photos)
+    [-5.3, 5.4, 7.2].forEach(function (tx, idx) {
+      var tz = MSTAGE_D / 2 + (idx === 0 ? 1.55 : 0.85);
+      var stand = new THREE.Group(); stand.position.set(tx, 0, tz);
+      var poleH = idx === 2 ? 1.15 : 1.38;
+      var pole = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.025, poleH, 8), blackMetal);
+      pole.position.y = poleH / 2 + 0.25; stand.add(pole);
+      for (var leg = 0; leg < 3; leg++) {
+        var ang = (leg / 3) * Math.PI * 2 + 0.4;
+        var lMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.72, 6), blackMetal);
+        lMesh.position.set(Math.cos(ang) * 0.22, 0.24, Math.sin(ang) * 0.22);
+        lMesh.rotation.z = Math.cos(ang) * 0.65;
+        lMesh.rotation.x = -Math.sin(ang) * 0.65;
+        stand.add(lMesh);
+      }
+      var head = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.12, 0.14), blackMetal);
+      head.position.y = poleH + 0.28; stand.add(head);
+      g.add(stand);
+    });
+
     M.add(g);
   }
 
-  function buildPillarsAndCrimsonCanopy() {
+  // 2. Build the 5-Bay Stepped White-Draped Backdrop, Columns, Floral Cornices & Inward-Slanting Diagonal Pillar Swags
+  function buildFiveBayBackdropAndFlorals() {
     var g = new THREE.Group();
-    var stageH = MSTAGE_H, pillarH = MPILLAR_H, canopyY = MCANOPY_Y;
-    var marigoldTex = createMarigoldTexture();
-    var pillarMat = new THREE.MeshStandardMaterial({ map: marigoldTex, bumpMap: marigoldTex, bumpScale: 0.04, roughness: 0.75, metalness: 0.05 });
-    var crimsonMat = new THREE.MeshStandardMaterial({ color: 0xc8142e, roughness: 0.42, metalness: 0.08 });
-    var pillarCoords = [
-      { x: -3.75, z: 1.85, isFront: true }, { x: 3.75, z: 1.85, isFront: true },
-      { x: -2.65, z: -2.15, isFront: false }, { x: 2.65, z: -2.15, isFront: false }
-    ];
-    pillarCoords.forEach(function (p) {
-      var w = p.isFront ? 0.68 : 0.62;
-      var pillar = new THREE.Mesh(new THREE.BoxGeometry(w, pillarH, w), pillarMat);
-      pillar.position.set(p.x, stageH + pillarH / 2, p.z); pillar.castShadow = true; pillar.receiveShadow = true; g.add(pillar);
-      var plinth = new THREE.Mesh(new THREE.BoxGeometry(w + 0.14, 0.42, w + 0.14), crimsonMat); plinth.position.set(p.x, stageH + 0.21, p.z); g.add(plinth);
-      if (p.isFront) {
-        var cap = new THREE.Mesh(new THREE.BoxGeometry(1.12, 0.58, 1.12), crimsonMat); cap.position.set(p.x, canopyY + 0.36, p.z); cap.castShadow = true; g.add(cap);
+    var y0 = MSTAGE_H;
+    var backZ = -1.45;
+    var pillarMat = std(0xfaf6f0, { roughness: 0.58 });
+    var curtainMat = std(0xffffff, { map: texWhiteCurtain, bumpMap: texWhiteCurtain, bumpScale: 0.02, roughness: 0.65 });
+
+    // Helper for a backdrop bay with pleated white curtains, framing white pillars, and top floral beam
+    function buildBay(xLeft, xRight, height, zOffset, topFloralThickness) {
+      var w = xRight - xLeft, cx = (xLeft + xRight) / 2;
+      // Pleated white backdrop curtain
+      var curtain = new THREE.Mesh(new THREE.BoxGeometry(w - 0.1, height - 0.15, 0.12), curtainMat);
+      curtain.position.set(cx, y0 + (height - 0.15) / 2, backZ + zOffset - 0.18);
+      curtain.receiveShadow = true; g.add(curtain);
+
+      // Top white architectural lintel beam
+      var lintel = new THREE.Mesh(new THREE.BoxGeometry(w + 0.36, 0.42, 0.48), pillarMat);
+      lintel.position.set(cx, y0 + height - 0.21, backZ + zOffset);
+      lintel.castShadow = true; lintel.receiveShadow = true; g.add(lintel);
+
+      // Overflowing pink, magenta, blush & white floral header crowning the lintel
+      var flowerCount = Math.floor(w * 68);
+      addFloralVolume(cx, y0 + height - 0.08, backZ + zOffset + 0.22, w + 0.45, topFloralThickness, 0.58, flowerCount, 0, "stage");
+    }
+
+    // Helper for a vertical white square pillar with optional inward-slanting diagonal floral swag
+    function buildPillar(x, height, zOffset, pWidth, swagDir) {
+      var p = new THREE.Mesh(new THREE.BoxGeometry(pWidth, height, 0.44), pillarMat);
+      p.position.set(x, y0 + height / 2, backZ + zOffset);
+      p.castShadow = true; p.receiveShadow = true; g.add(p);
+
+      // Base molding
+      var plinth = new THREE.Mesh(new THREE.BoxGeometry(pWidth + 0.08, 0.18, 0.52), pillarMat);
+      plinth.position.set(x, y0 + 0.09, backZ + zOffset); g.add(plinth);
+
+      // Diagonal floral swag bar mounted across the pillar face
+      // On the left side of the stage (x < 0), swags slant "\" (top-left to bottom-right, rotZ = -0.55)
+      // On the right side of the stage (x > 0), swags slant "/" (bottom-left to top-right, rotZ = +0.55)
+      if (swagDir !== 0) {
+        var swagY = y0 + 3.25;
+        var rotZ = swagDir < 0 ? -0.56 : 0.56;
+        var foliageBar = new THREE.Mesh(new THREE.BoxGeometry(0.24, 1.58, 0.22), std(0x284d26, { roughness: 0.85 }));
+        foliageBar.position.set(x, swagY, backZ + zOffset + 0.24);
+        foliageBar.rotation.z = rotZ;
+        g.add(foliageBar);
+        addFloralVolume(x, swagY, backZ + zOffset + 0.30, 0.46, 1.68, 0.38, 72, rotZ, "stage");
       }
-    });
-    // curved arch beams linking front and back pillars
-    [-1, 1].forEach(function (side) {
-      var pts = [];
-      for (var i = 0; i <= 28; i++) {
-        var t = i / 28, z = 1.85 - t * 4.0, inward = Math.sin(t * Math.PI) * 0.48;
-        pts.push(new THREE.Vector3(side * ((1 - t) * 3.75 + t * 2.65 + inward), canopyY, z));
-      }
-      var curve = new THREE.CatmullRomCurve3(pts);
-      for (var s = 0; s < 36; s++) {
-        var p1 = curve.getPointAt(s / 36), p2 = curve.getPointAt((s + 1) / 36);
-        var seg = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.48, p1.distanceTo(p2) + 0.04), crimsonMat);
-        seg.position.copy(p1.clone().add(p2).multiplyScalar(0.5)); seg.lookAt(p2); seg.castShadow = true; g.add(seg);
-      }
-    });
-    var frontBar = new THREE.Mesh(new THREE.BoxGeometry(7.6, 0.14, 0.14), crimsonMat); frontBar.position.set(0, canopyY + 0.12, 1.25); g.add(frontBar);
-    var backBar = new THREE.Mesh(new THREE.BoxGeometry(6.2, 0.14, 0.14), crimsonMat); backBar.position.set(0, canopyY + 0.12, -1.35); g.add(backBar);
-    // central stepped crimson ring
-    var ringZ = -0.05, dsCrimson = crimsonMat.clone(); dsCrimson.side = THREE.DoubleSide;
-    var outer = new THREE.Mesh(new THREE.CylinderGeometry(2.58, 2.58, 0.36, 64, 1, true), dsCrimson); outer.position.set(0, canopyY + 0.08, ringZ); g.add(outer);
-    var inner = new THREE.Mesh(new THREE.TorusGeometry(2.35, 0.24, 18, 64), crimsonMat); inner.rotation.x = Math.PI / 2; inner.position.set(0, canopyY + 0.1, ringZ); inner.castShadow = true; g.add(inner);
-    var lip = new THREE.Mesh(new THREE.TorusGeometry(2.12, 0.14, 16, 64), crimsonMat); lip.rotation.x = Math.PI / 2; lip.position.set(0, canopyY - 0.08, ringZ); g.add(lip);
+    }
+
+    // --- BAY 3: Wide Central Bay (x from -3.25 to +3.25, height 5.35m) ---
+    buildBay(-3.25, 3.25, 5.35, 0.0, 0.62);
+    // Inner and outer column pairs flanking the Center Bay
+    buildPillar(-2.35, 5.35, 0.08, 0.36, -1);
+    buildPillar(-3.25, 5.35, 0.12, 0.38, -1);
+    buildPillar(2.35, 5.35, 0.08, 0.36, 1);
+    buildPillar(3.25, 5.35, 0.12, 0.38, 1);
+
+    // Central round white & blush floral pomander medallion above the Maharaja sofa
+    addFloralVolume(0, y0 + 2.95, backZ - 0.02, 0.85, 0.82, 0.38, 65, 0, "whiteBlush");
+
+    // --- BAY 2 (Inner-Left Tallest Bay, x from -7.15 to -3.25, height 6.35m) ---
+    buildBay(-7.15, -3.25, 6.35, 0.18, 0.72);
+    buildPillar(-3.55, 6.35, 0.22, 0.42, 0);
+    buildPillar(-7.05, 6.35, 0.22, 0.42, -1);
+    // Floating diagonal floral cluster on the center of Bay 2's sheer curtain
+    addFloralVolume(-5.25, y0 + 2.95, backZ + 0.08, 0.42, 0.95, 0.28, 42, 0.52, "stage");
+
+    // --- BAY 4 (Inner-Right Tallest Bay, x from +3.25 to +7.15, height 6.35m) ---
+    buildBay(3.25, 7.15, 6.35, 0.18, 0.72);
+    buildPillar(3.55, 6.35, 0.22, 0.42, 0);
+    buildPillar(7.05, 6.35, 0.22, 0.42, 1);
+    // Floating diagonal floral cluster on the center of Bay 4's sheer curtain
+    addFloralVolume(5.25, y0 + 2.95, backZ + 0.08, 0.42, 0.95, 0.28, 42, -0.52, "stage");
+
+    // --- NARROW CHANDELIER BRIDGES between Bay 1-2 (x: -7.95 to -7.15) & Bay 4-5 (x: +7.15 to +7.95) ---
+    buildBay(-7.95, -7.15, 5.25, 0.02, 0.56);
+    buildBay(7.15, 7.95, 5.25, 0.02, 0.56);
+
+    // --- BAY 1 (Far-Left Wing Bay, x from -10.95 to -7.95, height 5.95m) ---
+    buildBay(-10.95, -7.95, 5.95, 0.14, 0.68);
+    buildPillar(-7.95, 5.95, 0.18, 0.38, -1);
+    buildPillar(-10.85, 5.95, 0.18, 0.42, -1);
+    addFloralVolume(-9.45, y0 + 2.85, backZ + 0.05, 0.38, 0.85, 0.26, 36, 0.5, "stage");
+
+    // --- BAY 5 (Far-Right Wing Bay, x from +7.95 to +10.95, height 5.95m) ---
+    buildBay(7.95, 10.95, 5.95, 0.14, 0.68);
+    buildPillar(7.95, 5.95, 0.18, 0.38, 1);
+    buildPillar(10.85, 5.95, 0.18, 0.42, 1);
+    addFloralVolume(9.45, y0 + 2.85, backZ + 0.05, 0.38, 0.85, 0.26, 36, -0.5, "stage");
+
     M.add(g);
   }
 
-  function buildCentralChandelierAndBells() {
-    var canopyY = MCANOPY_Y, ringZ = -0.05;
-    var chand = new THREE.Group(); chand.position.set(0, canopyY - 0.1, ringZ); M.add(chand);
-    var garlandMats = [0x6e0818, 0x4a040f, 0xc9420e, 0xe06810, 0x850d22].map(function (c, i) { return new THREE.MeshStandardMaterial({ color: c, roughness: [0.75, 0.8, 0.72, 0.7, 0.75][i] }); });
-    var jasmine = new THREE.MeshStandardMaterial({ color: 0xf7f3e3, roughness: 0.55 });
-    var pomMat = new THREE.MeshStandardMaterial({ color: 0x5c0615, roughness: 0.75 });
-    var goldBell = new THREE.MeshStandardMaterial({ color: 0xffcf40, metalness: 0.88, roughness: 0.22 });
-    var goldThread = new THREE.MeshStandardMaterial({ color: 0xe6b84c, metalness: 0.7, roughness: 0.35 });
-    var strandGeo = new THREE.CylinderGeometry(0.036, 0.036, 1.0, 8); strandGeo.translate(0, -0.5, 0);
-    var tasselGeo = new THREE.ConeGeometry(0.068, 0.36, 10), pomGeo = new THREE.SphereGeometry(0.062, 8, 8), tinyBellGeo = new THREE.ConeGeometry(0.042, 0.075, 8);
+  // 3. Build the 5 White/Gold Empire Cone Chandeliers & 6 Gold Multi-Arm Candelabra Chandeliers
+  function buildChandeliers() {
+    var y0 = MSTAGE_H, backZ = -1.25;
+    var creamGlowMat = new THREE.MeshStandardMaterial({
+      color: 0xfff5e4,
+      emissive: 0xffcf88,
+      emissiveIntensity: 0.65,
+      roughness: 0.32,
+      metalness: 0.05,
+      side: THREE.DoubleSide
+    });
+    var goldTrimMat = new THREE.MeshStandardMaterial({
+      color: 0xe6b84a,
+      metalness: 0.85,
+      roughness: 0.2,
+      emissive: 0x422a05
+    });
+    var bulbMat = new THREE.MeshBasicMaterial({ color: 0xfff2c8 });
 
-    [
-      { radius: 2.02, count: 52, baseLen: 2.35, lenVar: 0.25 },
-      { radius: 1.65, count: 42, baseLen: 2.55, lenVar: 0.25 },
-      { radius: 1.25, count: 32, baseLen: 2.72, lenVar: 0.22 },
-      { radius: 0.82, count: 20, baseLen: 2.85, lenVar: 0.18 }
-    ].forEach(function (ring, rIdx) {
-      for (var i = 0; i < ring.count; i++) {
-        var ang = (i / ring.count) * Math.PI * 2 + rIdx * 0.15;
-        var x = Math.cos(ang) * ring.radius, z = Math.sin(ang) * ring.radius;
-        var len = ring.baseLen + Math.sin(ang * 6 + rIdx) * ring.lenVar;
-        var pivot = new THREE.Group(); pivot.position.set(x, 0, z);
-        var strand = new THREE.Mesh(strandGeo, garlandMats[(i + rIdx * 2) % garlandMats.length]); strand.scale.set(1, len, 1); strand.castShadow = true; pivot.add(strand);
-        var tassel = new THREE.Mesh(tasselGeo, jasmine); tassel.position.y = -len - 0.14; pivot.add(tassel);
-        var pom = new THREE.Mesh(pomGeo, pomMat); pom.position.y = -len - 0.33; pivot.add(pom);
-        if (i % 2 === 0) {
-          var drop = 0.22 + (i % 3) * 0.12;
-          var thread = new THREE.Mesh(strandGeo, goldThread); thread.scale.set(0.14, drop, 0.14); thread.position.y = -len - 0.35; pivot.add(thread);
-          var bell = new THREE.Mesh(tinyBellGeo, goldBell); bell.position.y = -len - 0.35 - drop; pivot.add(bell);
+    // Large White/Cream Empire Chandelier with Gold Band (5 total: one centered in each of the 5 bays)
+    function createEmpireChandelier(x, topY, z, scale) {
+      var pivot = new THREE.Group();
+      pivot.position.set(x, topY, z);
+
+      var chainLen = 0.45 * scale;
+      var chain = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, chainLen, 8), goldTrimMat);
+      chain.position.y = -chainLen / 2; pivot.add(chain);
+
+      var body = new THREE.Group();
+      body.position.y = -chainLen;
+
+      // Upper fluted white silk/crystal bell
+      var upperCone = new THREE.Mesh(new THREE.CylinderGeometry(0.14 * scale, 0.56 * scale, 0.72 * scale, 24), creamGlowMat);
+      upperCone.position.y = -0.36 * scale; body.add(upperCone);
+
+      // Prominent gold horizontal waist band
+      var midRing = new THREE.Mesh(new THREE.TorusGeometry(0.57 * scale, 0.045 * scale, 12, 32), goldTrimMat);
+      midRing.rotation.x = Math.PI / 2; midRing.position.y = -0.72 * scale; body.add(midRing);
+
+      // Middle cylindrical tier
+      var midDrum = new THREE.Mesh(new THREE.CylinderGeometry(0.55 * scale, 0.46 * scale, 0.28 * scale, 24), creamGlowMat);
+      midDrum.position.y = -0.86 * scale; body.add(midDrum);
+
+      var lowerRing = new THREE.Mesh(new THREE.TorusGeometry(0.46 * scale, 0.03 * scale, 10, 28), goldTrimMat);
+      lowerRing.rotation.x = Math.PI / 2; lowerRing.position.y = -1.0 * scale; body.add(lowerRing);
+
+      // Lower inverted cone pendant tip
+      var lowerCone = new THREE.Mesh(new THREE.CylinderGeometry(0.44 * scale, 0.05 * scale, 0.58 * scale, 24), creamGlowMat);
+      lowerCone.position.y = -1.29 * scale; body.add(lowerCone);
+
+      var finial = new THREE.Mesh(new THREE.SphereGeometry(0.065 * scale, 12, 10), goldTrimMat);
+      finial.position.y = -1.6 * scale; body.add(finial);
+
+      var pl = new THREE.PointLight(0xffd28e, 0.85, 8.5);
+      pl.position.set(0, -0.9 * scale, 0); body.add(pl);
+      stageGlowLights.push({ light: pl, base: 0.85 });
+
+      pivot.add(body);
+      M.add(pivot);
+      chandelierSwings.push({ group: pivot, phase: x * 0.45, amp: 0.015 });
+    }
+
+    // Gold Multi-Arm Candelabra Chandelier (6 total: 4 across Center Bay + 2 in outer column bridges)
+    function createGoldArmChandelier(x, topY, z, scale) {
+      var pivot = new THREE.Group();
+      pivot.position.set(x, topY, z);
+
+      var rodLen = 0.78 * scale;
+      var rod = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, rodLen, 8), goldTrimMat);
+      rod.position.y = -rodLen / 2; pivot.add(rod);
+
+      var hub = new THREE.Group();
+      hub.position.y = -rodLen;
+
+      var centerColumn = new THREE.Mesh(new THREE.CylinderGeometry(0.04 * scale, 0.07 * scale, 0.42 * scale, 12), goldTrimMat);
+      centerColumn.position.y = -0.15 * scale; hub.add(centerColumn);
+
+      var centerBall = new THREE.Mesh(new THREE.SphereGeometry(0.08 * scale, 12, 10), goldTrimMat);
+      centerBall.position.y = -0.4 * scale; hub.add(centerBall);
+
+      var arms = 6;
+      for (var a = 0; a < arms; a++) {
+        var ang = (a / arms) * Math.PI * 2;
+        var armGroup = new THREE.Group();
+        armGroup.rotation.y = ang;
+
+        // Curved gold arm
+        var armBar = new THREE.Mesh(new THREE.TorusGeometry(0.22 * scale, 0.015 * scale, 8, 16, Math.PI * 0.85), goldTrimMat);
+        armBar.position.set(0.22 * scale, -0.14 * scale, 0);
+        armBar.rotation.z = Math.PI * 1.08;
+        armGroup.add(armBar);
+
+        // Bobeche dish + glowing candle bulb
+        var dish = new THREE.Mesh(new THREE.CylinderGeometry(0.055 * scale, 0.03 * scale, 0.03 * scale, 10), goldTrimMat);
+        dish.position.set(0.42 * scale, -0.06 * scale, 0);
+        armGroup.add(dish);
+
+        var candle = new THREE.Mesh(new THREE.CylinderGeometry(0.018 * scale, 0.018 * scale, 0.11 * scale, 8), IVORY);
+        candle.position.set(0.42 * scale, 0.0 * scale, 0);
+        armGroup.add(candle);
+
+        var flame = new THREE.Mesh(new THREE.SphereGeometry(0.032 * scale, 8, 8), bulbMat);
+        flame.scale.set(0.8, 1.5, 0.8);
+        flame.position.set(0.42 * scale, 0.08 * scale, 0);
+        armGroup.add(flame);
+
+        hub.add(armGroup);
+      }
+
+      var pl = new THREE.PointLight(0xffc978, 0.55, 6.5);
+      pl.position.set(0, -0.15 * scale, 0); hub.add(pl);
+      stageGlowLights.push({ light: pl, base: 0.55 });
+
+      pivot.add(hub);
+      M.add(pivot);
+      chandelierSwings.push({ group: pivot, phase: x * 0.7 + 1.2, amp: 0.02 });
+    }
+
+    // 5 Empire Chandeliers (one in each bay: Bay 1, Bay 2, Center Bay 3, Bay 4, Bay 5)
+    createEmpireChandelier(-9.45, y0 + 5.65, backZ + 0.18, 0.96);
+    createEmpireChandelier(-5.25, y0 + 6.05, backZ + 0.25, 1.05);
+    createEmpireChandelier(0.0,   y0 + 5.05, backZ + 0.08, 0.98);
+    createEmpireChandelier(5.25,  y0 + 6.05, backZ + 0.25, 1.05);
+    createEmpireChandelier(9.45,  y0 + 5.65, backZ + 0.18, 0.96);
+
+    // 6 Gold Multi-Arm Chandeliers (2 flanking center chandelier, 2 in center-bay column alcoves, 2 in outer bay bridges)
+    createGoldArmChandelier(-1.35, y0 + 5.0, backZ + 0.08, 0.95);
+    createGoldArmChandelier(1.35,  y0 + 5.0, backZ + 0.08, 0.95);
+    createGoldArmChandelier(-2.80, y0 + 5.0, backZ + 0.14, 0.90);
+    createGoldArmChandelier(2.80,  y0 + 5.0, backZ + 0.14, 0.90);
+    createGoldArmChandelier(-7.55, y0 + 4.95, backZ + 0.12, 0.92);
+    createGoldArmChandelier(7.55,  y0 + 4.95, backZ + 0.12, 0.92);
+  }
+
+  // 4. Build the Central Silver-and-White Tufted Maharaja Sofa, 2 Mirrored Geometric Consoles & 2 White Pedestals
+  function buildStageFurnitureAndProps() {
+    var fg = new THREE.Group();
+    fg.position.y = MSTAGE_H;
+
+    // Tufted white/ice-blue velvet texture for the Maharaja sofa
+    var texTuftedVelvet = canvasTex(512, 256, function (g, w, h) {
+      g.fillStyle = "#e5ebf6"; g.fillRect(0, 0, w, h);
+      var step = 32;
+      g.strokeStyle = "rgba(115, 132, 168, 0.45)"; g.lineWidth = 2;
+      for (var y = 0; y <= h; y += step) {
+        for (var x = 0; x <= w; x += step) {
+          g.beginPath();
+          g.moveTo(x, y - step / 2);
+          g.lineTo(x + step / 2, y);
+          g.lineTo(x, y + step / 2);
+          g.lineTo(x - step / 2, y);
+          g.closePath();
+          g.stroke();
+          g.fillStyle = "rgba(85, 102, 140, 0.55)";
+          g.beginPath(); g.arc(x, y, 2.5, 0, Math.PI * 2); g.fill();
         }
-        chand.add(pivot);
-        chandelierStrands.push({ group: pivot, phaseX: x * 0.8 + i * 0.2, phaseZ: z * 0.8 + rIdx, amp: 0.018 + len * 0.005 });
       }
-    });
+    }, 2, 1);
 
-    // temple bells under the curved side arches
-    var bellGeo = new THREE.ConeGeometry(0.065, 0.11, 12);
-    var rimGeo = new THREE.TorusGeometry(0.062, 0.014, 6, 12); rimGeo.rotateX(Math.PI / 2);
-    [-1, 1].forEach(function (side) {
-      for (var i = 0; i < 28; i++) {
-        var t = i / 27, z = 2.05 - t * 4.3, inward = Math.sin(t * Math.PI) * 0.48;
-        var baseX = side * ((1 - t) * 3.75 + t * 2.65 + inward);
-        [-0.16, 0.16].forEach(function (ox, row) {
-          var bp = new THREE.Group(); bp.position.set(baseX + ox, canopyY - 0.18, z);
-          var strLen = 1.45 + Math.sin(i * 1.7 + row) * 0.55 + Math.cos(i * 0.8) * 0.25;
-          var cord = new THREE.Mesh(strandGeo, goldThread); cord.scale.set(0.16, strLen, 0.16); bp.add(cord);
-          for (var b = 0; b < 2 + (i % 2); b++) {
-            var by = -(strLen - b * 0.34);
-            var bm = new THREE.Mesh(bellGeo, goldBell); bm.position.y = by; bp.add(bm);
-            var rm = new THREE.Mesh(rimGeo, goldBell); rm.position.y = by - 0.05; bp.add(rm);
-          }
-          M.add(bp);
-          bellStrands.push({ group: bp, phase: i * 0.45 + side + row, amp: 0.025 });
-        });
-      }
-    });
-  }
+    var tuftedMat = std(0xffffff, { map: texTuftedVelvet, bumpMap: texTuftedVelvet, bumpScale: 0.025, roughness: 0.62 });
+    var silverCarvedMat = std(0xd8dfe8, { metalness: 0.78, roughness: 0.25 });
+    var cushionBlueMat = std(0xa8c6e8, { roughness: 0.55 });
 
-  function buildStageFurnitureAndAltar() {
-    var fg = new THREE.Group(); fg.position.y = MSTAGE_H;
-    var wood = new THREE.MeshStandardMaterial({ color: 0x361c14, roughness: 0.5, metalness: 0.1 });
-    var velvet = new THREE.MeshStandardMaterial({ color: 0xb8142c, roughness: 0.72 });
-    var creamGold = new THREE.MeshStandardMaterial({ map: createBrocadeTexture("#efe4cc", "#c99e42"), roughness: 0.55 });
-    var mauve = new THREE.MeshStandardMaterial({ map: createBrocadeTexture("#8c7278", "#b89f9d"), roughness: 0.65 });
-    var brass = new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.8, roughness: 0.28 });
-    function box(parent, sx, sy, sz, mat, x, y, z) { var m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), mat); m.position.set(x, y, z); m.castShadow = true; parent.add(m); return m; }
+    // --- CENTRAL ROYAL SILVER & WHITE TUFTED MAHARAJA SOFA (x = 0, z = -0.35) ---
+    var sofa = new THREE.Group();
+    sofa.position.set(0, 0, -0.35);
 
-    // couple's chairs
-    [-0.68, 0.68].forEach(function (cx) {
-      var ch = new THREE.Group(); ch.position.set(cx, 0, -1.85);
-      box(ch, 1.05, 0.14, 0.92, wood, 0, 0.34, 0);
-      [[-0.46, -0.38], [0.46, -0.38], [-0.46, 0.38], [0.46, 0.38]].forEach(function (l) { var leg = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.035, 0.34, 10), wood); leg.position.set(l[0], 0.17, l[1]); ch.add(leg); });
-      box(ch, 0.98, 0.14, 0.86, velvet, 0, 0.46, 0);
-      box(ch, 1.05, 0.65, 0.1, wood, 0, 0.72, -0.41);
-      [-0.48, 0.48].forEach(function (ax) { box(ch, 0.09, 0.28, 0.88, wood, ax, 0.56, 0); });
-      box(ch, 0.66, 0.56, 0.18, creamGold, 0, 0.78, -0.24).rotation.x = -0.15;
-      fg.add(ch);
-    });
-    // flanking diwans
-    [-2.25, 2.25].forEach(function (dx) {
-      var dw = new THREE.Group(); dw.position.set(dx, 0, -0.75); dw.rotation.y = dx < 0 ? Math.PI / 2 + 0.08 : -Math.PI / 2 - 0.08;
-      box(dw, 1.85, 0.14, 0.92, wood, 0, 0.32, 0);
-      [[-0.84, -0.38], [0.84, -0.38], [-0.84, 0.38], [0.84, 0.38]].forEach(function (l) { var leg = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.04, 0.32, 10), wood); leg.position.set(l[0], 0.16, l[1]); dw.add(leg); });
-      box(dw, 1.78, 0.15, 0.86, velvet, 0, 0.45, 0);
-      [-0.38, 0.38].forEach(function (px) { var p = box(dw, 0.55, 0.45, 0.18, mauve, px, 0.72, -0.22); p.rotation.x = -0.22; p.rotation.y = px < 0 ? 0.12 : -0.12; });
-      fg.add(dw);
-    });
-    // havan kund
-    var hv = new THREE.Group(); hv.position.set(0, 0, 0.35);
-    var border = new THREE.Mesh(new THREE.TorusGeometry(0.85, 0.1, 10, 32), new THREE.MeshStandardMaterial({ color: 0xff8800, roughness: 0.85 })); border.rotation.x = Math.PI / 2; border.position.y = 0.05; hv.add(border);
-    var copper = new THREE.MeshStandardMaterial({ color: 0xb86b35, metalness: 0.72, roughness: 0.32 });
-    for (var t = 0; t < 3; t++) { var w = 1.05 - t * 0.16; box(hv, w, 0.11, w, copper, 0, 0.055 + t * 0.11, 0); }
-    var sticks = new THREE.MeshStandardMaterial({ color: 0x4a2c18, roughness: 0.9 });
-    for (var s = 0; s < 6; s++) { var st = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.55, 6), sticks); st.position.y = 0.36; st.rotation.z = Math.PI / 2; st.rotation.y = (s / 6) * Math.PI; hv.add(st); }
-    var flameCols = [0xff5500, 0xffaa00, 0xffee55];
-    for (var f = 0; f < 7; f++) {
-      var fl = new THREE.Mesh(new THREE.ConeGeometry(0.09 + (f % 2) * 0.04, 0.42, 8), new THREE.MeshBasicMaterial({ color: flameCols[f % 3], transparent: true, opacity: 0.88 }));
-      var fa = (f / 7) * Math.PI * 2, fr = f === 0 ? 0 : 0.12;
-      fl.position.set(Math.cos(fa) * fr, 0.52, Math.sin(fa) * fr); hv.add(fl);
-      havanFlames.push({ mesh: fl, phase: f * 1.1 });
+    // Seat base & carved silver scalloped apron
+    var seatDeck = new THREE.Mesh(new THREE.BoxGeometry(2.55, 0.24, 0.96), tuftedMat);
+    seatDeck.position.set(0, 0.44, 0.05); seatDeck.castShadow = true; sofa.add(seatDeck);
+
+    var apron = new THREE.Mesh(new THREE.BoxGeometry(2.62, 0.14, 1.0), silverCarvedMat);
+    apron.position.set(0, 0.27, 0.05); sofa.add(apron);
+
+    // Ornate silver baroque scrollwork along front apron
+    for (var s = -4; s <= 4; s++) {
+      var scroll = new THREE.Mesh(new THREE.SphereGeometry(0.065, 10, 8), silverCarvedMat);
+      scroll.scale.set(1.5, 0.85, 0.5);
+      scroll.position.set(s * 0.26, 0.26, 0.56);
+      sofa.add(scroll);
     }
-    havanLight = new THREE.PointLight(0xff7b1a, 1.4, 7.5); havanLight.position.set(0, 0.85, 0); hv.add(havanLight);
-    [[-0.75, 0.45], [0.75, 0.45], [-0.65, -0.55], [0.65, -0.55]].forEach(function (p) { var pot = new THREE.Mesh(new THREE.SphereGeometry(0.14, 12, 10), brass); pot.position.set(p[0], 0.14, p[1]); hv.add(pot); });
-    fg.add(hv);
+
+    // 4 carved cabriole silver legs
+    [[-1.22, -0.38], [1.22, -0.38], [-1.22, 0.48], [1.22, 0.48]].forEach(function (lp) {
+      var leg = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.04, 0.26, 10), silverCarvedMat);
+      leg.position.set(lp[0], 0.13, lp[1]); sofa.add(leg);
+    });
+
+    // Outward-scrolling rolled tufted arms
+    [-1.28, 1.28].forEach(function (ax) {
+      var sgn = ax < 0 ? -1 : 1;
+      var armBody = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.56, 0.94), tuftedMat);
+      armBody.position.set(ax, 0.68, 0.05);
+      armBody.rotation.z = -sgn * 0.18;
+      armBody.castShadow = true; sofa.add(armBody);
+
+      var armScroll = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.96, 16), tuftedMat);
+      armScroll.rotation.x = Math.PI / 2;
+      armScroll.position.set(ax + sgn * 0.08, 0.92, 0.05);
+      sofa.add(armScroll);
+
+      // Silver carved front face of the scrolled arm
+      var armFace = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.035, 10, 20), silverCarvedMat);
+      armFace.position.set(ax + sgn * 0.06, 0.88, 0.54);
+      sofa.add(armFace);
+    });
+
+    // High arched tufted backrest + baroque carved silver crest
+    var backRest = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.25, 0.22, 32), tuftedMat);
+    backRest.rotation.x = Math.PI / 2;
+    backRest.scale.set(1.05, 1.0, 0.88);
+    backRest.position.set(0, 1.08, -0.36);
+    backRest.castShadow = true; sofa.add(backRest);
+
+    // Ornate carved silver crest frame crowning the arched backrest
+    var crestArch = new THREE.Mesh(new THREE.TorusGeometry(1.12, 0.09, 12, 36, Math.PI), silverCarvedMat);
+    crestArch.scale.set(1.05, 0.88, 0.7);
+    crestArch.position.set(0, 1.08, -0.36);
+    sofa.add(crestArch);
+
+    // Top central silver royal crown medallion on the sofa crest
+    var topMedallion = new THREE.Mesh(new THREE.SphereGeometry(0.24, 16, 12), silverCarvedMat);
+    topMedallion.scale.set(1.35, 1.15, 0.45);
+    topMedallion.position.set(0, 2.08, -0.35);
+    sofa.add(topMedallion);
+
+    [-0.55, 0.55, -0.95, 0.95].forEach(function (cx, i) {
+      var leaf = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 10), silverCarvedMat);
+      leaf.scale.set(1.4, 0.8, 0.4);
+      leaf.position.set(cx, i < 2 ? 1.92 : 1.62, -0.35);
+      sofa.add(leaf);
+    });
+
+    // Center lumbar pillow
+    var pillow = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.34, 0.18), cushionBlueMat);
+    pillow.position.set(0, 0.74, -0.18); pillow.rotation.x = -0.12;
+    sofa.add(pillow);
+
+    fg.add(sofa);
+
+    // --- 2 MIRRORED GEOMETRIC DIAMOND-BASE CONSOLE TABLES in Bays 2 & 4 (x = -5.25 and x = +5.25) ---
+    var mirrorMat = new THREE.MeshStandardMaterial({ color: 0xecf4ff, metalness: 0.92, roughness: 0.08 });
+    var crystalRimMat = new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.65, roughness: 0.15, emissive: 0x222834 });
+
+    [-5.25, 5.25].forEach(function (tx) {
+      var tbl = new THREE.Group();
+      tbl.position.set(tx, 0, -0.45);
+
+      // Stepped base plinth
+      var tBase = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.10, 0.52), crystalRimMat);
+      tBase.position.y = 0.05; tbl.add(tBase);
+
+      // Diamond-shaped geometric central pedestal with inner diamond accent (matching the photo)
+      var outerDiamond = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.68, 0.32), mirrorMat);
+      outerDiamond.position.y = 0.54;
+      outerDiamond.rotation.z = Math.PI / 4;
+      outerDiamond.castShadow = true; tbl.add(outerDiamond);
+
+      var innerCut = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.36, 0.35), std(0xb8c6db, { metalness: 0.5, roughness: 0.35 }));
+      innerCut.position.y = 0.54;
+      innerCut.rotation.z = Math.PI / 4;
+      tbl.add(innerCut);
+
+      var centerGem = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.38), mirrorMat);
+      centerGem.position.y = 0.54;
+      centerGem.rotation.z = Math.PI / 4;
+      tbl.add(centerGem);
+
+      // Wide horizontal tabletop rimmed in vertical mirror/crystal segments
+      var topBar = new THREE.Mesh(new THREE.BoxGeometry(1.75, 0.14, 0.55), mirrorMat);
+      topBar.position.y = 1.02; topBar.castShadow = true; tbl.add(topBar);
+      for (var k = -8; k <= 8; k++) {
+        var barSeg = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.15, 0.57), crystalRimMat);
+        barSeg.position.set(k * 0.10, 1.02, 0);
+        tbl.add(barSeg);
+      }
+
+      fg.add(tbl);
+
+      // Lush floral centerpiece on top of each mirrored console table
+      addFloralVolume(tx, MSTAGE_H + 1.28, -0.45, 1.25, 0.52, 0.48, 85, 0, "tableCenterpiece");
+    });
+
+    // --- 2 TALL WHITE PEDESTAL COLUMNS in Far-Left Bay 1 & Far-Right Bay 5 (x = -9.45 and x = +9.45) ---
+    var pedMat = std(0xf7f5f0, { roughness: 0.5 });
+    [-9.45, 9.45].forEach(function (px) {
+      var ped = new THREE.Group();
+      ped.position.set(px, 0, -0.50);
+
+      var colBody = new THREE.Mesh(new THREE.BoxGeometry(0.46, 1.32, 0.46), pedMat);
+      colBody.position.y = 0.66; colBody.castShadow = true; ped.add(colBody);
+
+      var colCap = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.08, 0.56), pedMat);
+      colCap.position.y = 1.34; ped.add(colCap);
+
+      // Subtle decorative cutout diamond motifs on front face of pedestal
+      [0.45, 0.88].forEach(function (dy) {
+        var motif = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 0.03), std(0xc8c2b8, { roughness: 0.6 }));
+        motif.position.set(0, dy, 0.23); motif.rotation.z = Math.PI / 4;
+        ped.add(motif);
+      });
+
+      fg.add(ped);
+
+      // Floral arrangement atop each white pedestal
+      addFloralVolume(px, MSTAGE_H + 1.56, -0.50, 0.92, 0.56, 0.52, 65, 0, "pedestalTop");
+    });
+
     M.add(fg);
   }
 
-  function buildKalashTotemsAndLamps() {
-    var bg = new THREE.Group(); bg.position.y = MSTAGE_H;
-    var antique = new THREE.MeshStandardMaterial({ color: 0xc59b38, metalness: 0.78, roughness: 0.32 });
-    var bright = new THREE.MeshStandardMaterial({ color: 0xffcc44, metalness: 0.85, roughness: 0.22 });
-    var redBase = new THREE.MeshStandardMaterial({ color: 0xa61429, roughness: 0.6 });
-    // stacked brass kalash totems in front of each pillar
-    [{ x: -3.55, z: 2.38, s: 1.0 }, { x: 3.55, z: 2.38, s: 1.0 }, { x: -2.45, z: -1.65, s: 0.88 }, { x: 2.45, z: -1.65, s: 0.88 }].forEach(function (tp) {
-      var tt = new THREE.Group(); tt.position.set(tp.x, 0, tp.z); tt.scale.setScalar(tp.s);
-      var base = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.34, 0.45, 16), redBase); base.position.y = 0.225; tt.add(base);
-      var y = 0.45;
-      for (var k = 0; k < 6; k++) {
-        var r = 0.26 - k * 0.026;
-        var pot = new THREE.Mesh(new THREE.SphereGeometry(r, 18, 14), antique); pot.scale.y = 0.82; pot.position.y = y + r * 0.75; pot.castShadow = true; tt.add(pot);
-        var neck = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.65, r * 0.5, 0.08, 14), bright); neck.position.y = y + r * 1.42; tt.add(neck);
-        y += r * 1.48;
+  // 5. Render all collected stage flower volumes as high-performance instanced meshes with rich multi-tone petals and greenery
+  function finalizeStageFloralInstances() {
+    var total = flowerBoxList.length;
+    var blossomGeo = new THREE.DodecahedronGeometry(0.125, 1);
+    var blossomInst = new THREE.InstancedMesh(blossomGeo, std(0xffffff, { roughness: 0.62 }), total);
+    var leafGeo = new THREE.ConeGeometry(0.075, 0.26, 5);
+    var leafCount = Math.floor(total * 0.42);
+    var leafInst = new THREE.InstancedMesh(leafGeo, std(0x285428, { roughness: 0.78 }), leafCount);
+
+    var palettes = {
+      stage: [0xfceef5, 0xf7b2d2, 0xe85d9c, 0xc91e68, 0x8f1248, 0xffffff, 0xf582b6],
+      whiteBlush: [0xffffff, 0xfcf5e8, 0xf7d2e2, 0xf2a6c4, 0xe6f2d8],
+      tableCenterpiece: [0xffffff, 0xf7c2d8, 0xd91e48, 0xe84a7f, 0xb8143a, 0xfae6ec],
+      pedestalTop: [0xffffff, 0xfaf2d8, 0xd41c3c, 0xe85c88, 0xf5d4e2],
+      frontTrough: [0xffffff, 0xf7e26b, 0xf2c830, 0xe86ca5, 0x8838a8, 0x5ab2f2]
+    };
+
+    var col = new THREE.Color();
+    var leafIdx = 0;
+    for (var i = 0; i < total; i++) {
+      var f = flowerBoxList[i];
+      setInst(blossomInst, i, f.x, f.y, f.z, f.s, f.s * 0.9, f.s, rnd() * 6.28, rr(-0.5, 0.5), rr(-0.5, 0.5));
+      var pal = palettes[f.p] || palettes.stage;
+      col.setHex(pal[(rnd() * pal.length) | 0]).convertSRGBToLinear();
+      blossomInst.setColorAt(i, col);
+
+      if (i % 2 === 0 && leafIdx < leafCount) {
+        setInst(leafInst, leafIdx, f.x + rr(-0.08, 0.08), f.y + rr(-0.08, 0.08), f.z + rr(-0.05, 0.08), rr(0.8, 1.35), rr(0.9, 1.45), rr(0.8, 1.35), rnd() * 6.28, rr(-1.1, 1.1), rr(-1.1, 1.1));
+        col.setHex(leafIdx % 3 === 0 ? 0x1e4620 : 0x386e34).convertSRGBToLinear();
+        leafInst.setColorAt(leafIdx, col);
+        leafIdx++;
       }
-      var fin = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.24, 12), bright); fin.position.y = y + 0.1; tt.add(fin);
-      bg.add(tt);
-    });
-    // kuthu vilakku oil lamps
-    var wickMat = new THREE.MeshBasicMaterial({ color: 0xffdd55 });
-    var whiteG = new THREE.MeshStandardMaterial({ color: 0xf7f2e6, roughness: 0.6 }), pinkG = new THREE.MeshStandardMaterial({ color: 0xd96b82, roughness: 0.65 });
-    var wickGeo = new THREE.SphereGeometry(0.022, 6, 6);
-    [{ x: -3.15, z: 3.05 }, { x: 3.15, z: 3.05 }, { x: -1.65, z: 2.35, g: true }, { x: 1.65, z: 2.35, g: true }, { x: -1.35, z: 3.45 }].forEach(function (lp) {
-      var lamp = new THREE.Group(); lamp.position.set(lp.x, 0, lp.z);
-      var H = 1.68;
-      var lb = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.32, 0.22, 16), bright); lb.position.y = 0.11; lamp.add(lb);
-      var stem = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.065, H, 12), bright); stem.position.y = H / 2; stem.castShadow = true; lamp.add(stem);
-      for (var t = 0; t < 4; t++) {
-        var ty = 0.45 + t * 0.32, tr = 0.28 - t * 0.045;
-        var tray = new THREE.Mesh(new THREE.CylinderGeometry(tr, tr * 0.6, 0.05, 16), bright); tray.position.y = ty; lamp.add(tray);
-        for (var w = 0; w < 6; w++) { var wa = (w / 6) * Math.PI * 2; var wk = new THREE.Mesh(wickGeo, wickMat); wk.position.set(Math.cos(wa) * (tr - 0.02), ty + 0.035, Math.sin(wa) * (tr - 0.02)); lamp.add(wk); }
-      }
-      var crown = new THREE.Mesh(new THREE.OctahedronGeometry(0.09, 1), bright); crown.position.y = H + 0.08; lamp.add(crown);
-      if (lp.g) {
-        var mala = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.055, 10, 28), whiteG); mala.scale.set(0.65, 2.2, 0.65); mala.position.set(0, 1.05, 0.06); lamp.add(mala);
-        var rose = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.03, 8, 12), pinkG); rose.position.set(-0.16, 1.05, 0.08); lamp.add(rose);
-        var rose2 = rose.clone(); rose2.position.x = 0.16; lamp.add(rose2);
-      }
-      var pl = new THREE.PointLight(0xffaa33, 0.45, 4.5); pl.position.set(0, 1.2, 0); lamp.add(pl); lampLights.push(pl);
-      bg.add(lamp);
-    });
-    M.add(bg);
+    }
+    blossomInst.castShadow = true; blossomInst.receiveShadow = true; M.add(blossomInst);
+    leafInst.castShadow = true; M.add(leafInst);
   }
 
-  function buildTuberosePlantersAndFoliage() {
-    var urn = new THREE.MeshStandardMaterial({ color: 0xb88c32, metalness: 0.75, roughness: 0.32 });
-    var green = new THREE.MeshStandardMaterial({ color: 0x2b5320, roughness: 0.8 });
-    var white = new THREE.MeshStandardMaterial({ color: 0xf7f5eb, roughness: 0.5 });
-    var leafGeo = new THREE.ConeGeometry(0.08, 0.48, 5);
-    function planter(scale) {
-      var p = new THREE.Group();
-      var pot = new THREE.Mesh(new THREE.SphereGeometry(0.32, 16, 12), urn); pot.scale.set(1.05, 0.88, 1.05); pot.position.y = 0.26; pot.castShadow = true; p.add(pot);
-      var rim = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.035, 8, 16), urn); rim.rotation.x = Math.PI / 2; rim.position.y = 0.48; p.add(rim);
-      for (var l = 0; l < 14; l++) {
-        var la = (l / 14) * Math.PI * 2, leaf = new THREE.Mesh(leafGeo, green);
-        leaf.position.set(Math.cos(la) * 0.18, 0.56, Math.sin(la) * 0.18); leaf.rotation.z = -Math.cos(la) * 0.45; leaf.rotation.x = Math.sin(la) * 0.45; p.add(leaf);
-      }
-      for (var s = 0; s < 16; s++) {
-        var sa = (s / 16) * Math.PI * 2 + (s % 2) * 0.2, rad = (s % 3) * 0.075 + 0.03, h = 0.55 + (1 - rad) * 0.35 + (s % 2) * 0.1;
-        var sg = new THREE.Group(); sg.position.set(Math.cos(sa) * rad, 0.48, Math.sin(sa) * rad);
-        sg.rotation.z = -Math.cos(sa) * rad * 1.6; sg.rotation.x = Math.sin(sa) * rad * 1.6;
-        var stem = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.02, h, 5), green); stem.position.y = h / 2; sg.add(stem);
-        var bloom = new THREE.Mesh(new THREE.ConeGeometry(0.055, h * 0.58, 7), white); bloom.position.y = h * 0.75; sg.add(bloom);
-        p.add(sg);
-      }
-      p.scale.setScalar(scale);
-      return p;
-    }
-    [{ x: -1.85, y: 0.58, z: 4.95, s: 1.05 }, { x: -1.25, y: 0.87, z: 4.55, s: 0.95 }, { x: 1.95, y: 0.58, z: 4.95, s: 1.05 }, { x: 2.45, y: 0.29, z: 5.38, s: 0.95 }].forEach(function (p) {
-      var pt = planter(p.s); pt.position.set(p.x, p.y, p.z); M.add(pt);
+  // 6. Stage Backdrop Uplighting (warm ivory/gold on wing curtains, soft ice-blue/white accent in center & stage skirt)
+  function buildStageUplights() {
+    var y0 = MSTAGE_H;
+    var lightConfigs = [
+      { x: -9.45, y: y0 + 2.5, z: -0.6, c: 0xffe4b5, i: 1.0, d: 7.5 },
+      { x: -5.25, y: y0 + 2.8, z: -0.5, c: 0xd8ecff, i: 1.1, d: 8.0 },
+      { x:  0.00, y: y0 + 2.6, z: -0.4, c: 0xfff0d6, i: 1.25, d: 8.5 },
+      { x:  5.25, y: y0 + 2.8, z: -0.5, c: 0xd8ecff, i: 1.1, d: 8.0 },
+      { x:  9.45, y: y0 + 2.5, z: -0.6, c: 0xffe4b5, i: 1.0, d: 7.5 },
+      // Cool blue front wash illuminating the pleated blue stage skirting & floral aisle
+      { x: -6.0,  y: 0.65,     z:  3.6, c: 0x58a8ff, i: 0.85, d: 9.0 },
+      { x:  0.0,  y: 0.65,     z:  4.2, c: 0x70b8ff, i: 0.90, d: 9.5 },
+      { x:  6.0,  y: 0.65,     z:  3.6, c: 0x58a8ff, i: 0.85, d: 9.0 }
+    ];
+    lightConfigs.forEach(function (cfg) {
+      var pl = new THREE.PointLight(cfg.c, cfg.i, cfg.d, 1.5);
+      pl.position.set(cfg.x, cfg.y, cfg.z);
+      M.add(pl);
+      stageGlowLights.push({ light: pl, base: cfg.i });
     });
-    [
-      { x: -4.25, z: 2.35, s: 1.0 }, { x: 4.25, z: 2.35, s: 1.0 }, { x: -4.15, z: 0.4, s: 0.95 }, { x: 4.15, z: 0.4, s: 0.95 },
-      { x: -3.85, z: -1.4, s: 0.95 }, { x: 3.85, z: -1.4, s: 0.95 },
-      { x: -2.1, z: -2.55, s: 1.15 }, { x: -1.1, z: -2.65, s: 1.2 }, { x: 0.0, z: -2.75, s: 1.3 }, { x: 1.1, z: -2.65, s: 1.2 }, { x: 2.1, z: -2.55, s: 1.15 }
-    ].forEach(function (p) { var pt = planter(p.s); pt.position.set(p.x, MSTAGE_H, p.z); M.add(pt); });
-    // tall reeds behind the couple's seating
-    var reeds = new THREE.Group(); reeds.position.set(0, MSTAGE_H + 0.5, -2.95);
-    var reedGeo = new THREE.CylinderGeometry(0.008, 0.018, 2.4, 5); reedGeo.translate(0, 1.2, 0);
-    for (var r = 0; r < 65; r++) {
-      var reed = new THREE.Mesh(reedGeo, green);
-      reed.position.set((Math.random() - 0.5) * 4.2, 0, (Math.random() - 0.5) * 0.5);
-      reed.scale.y = 0.75 + Math.random() * 0.55; reed.rotation.z = (Math.random() - 0.5) * 0.28; reed.rotation.x = (Math.random() - 0.5) * 0.2;
-      reeds.add(reed); swayingFoliage.push({ mesh: reed, baseRotZ: reed.rotation.z, phase: r * 0.3 });
-    }
-    M.add(reeds);
   }
 
-  buildMandapStageAndSteps();
-  buildPillarsAndCrimsonCanopy();
-  buildCentralChandelierAndBells();
-  buildStageFurnitureAndAltar();
-  buildKalashTotemsAndLamps();
-  buildTuberosePlantersAndFoliage();
+  buildStagePlatformAndFrontDetails();
+  buildFiveBayBackdropAndFlorals();
+  buildChandeliers();
+  buildStageFurnitureAndProps();
+  finalizeStageFloralInstances();
+  buildStageUplights();
 
-  // The design's colours were picked for a non-sRGB renderer; convert once so they read the same here.
-  (function matchColours() {
-    var seen = new Set();
-    M.traverse(function (o) {
-      var mats = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : [];
-      mats.forEach(function (m) {
-        if (seen.has(m)) return; seen.add(m);
-        if (m.color && !m.map) m.color.convertSRGBToLinear();
-      });
-    });
-  })();
-
-  // ---------- String lights on poles around the seating ----------
+  // ---------- Overhead String Lights around the Venue ----------
   var fairy;
   (function lights() {
     var pts = [], poleMat = std(0x3a2a22, { roughness: 0.9 });
-    var P = [[-11, -4], [-11, 12], [11, 12], [11, -4]];
-    P.forEach(function (p) { add(new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 4.4, 6), poleMat), p[0], 2.2, p[1]); });
+    var P = [[-13, -5], [-13, 13], [13, 13], [13, -5]];
+    P.forEach(function (p) { add(new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 4.6, 6), poleMat), p[0], 2.3, p[1]); });
     function line(a, b) {
-      for (var i = 0; i <= 40; i++) { var t = i / 40; pts.push(a[0] + (b[0] - a[0]) * t, 4.3 - Math.sin(t * Math.PI) * 0.45, a[1] + (b[1] - a[1]) * t); }
+      for (var i = 0; i <= 44; i++) { var t = i / 44; pts.push(a[0] + (b[0] - a[0]) * t, 4.5 - Math.sin(t * Math.PI) * 0.45, a[1] + (b[1] - a[1]) * t); }
     }
     for (var k = 0; k < 4; k++) line(P[k], P[(k + 1) % 4]);
-    // a lattice across the seating
-    for (var z = -2; z <= 10; z += 3) line([-11, z], [11, z + 0]);
+    for (var z = -2; z <= 10; z += 3) line([-13, z], [13, z]);
     var geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
     var sprite = canvasTex(64, 64, function (g) {
-      var gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, "rgba(255,240,200,1)"); gr.addColorStop(0.3, "rgba(255,200,120,0.55)"); gr.addColorStop(1, "rgba(255,180,80,0)");
+      var gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, "rgba(255,242,205,1)"); gr.addColorStop(0.3, "rgba(255,205,125,0.55)"); gr.addColorStop(1, "rgba(255,180,80,0)");
       g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
     });
     fairy = new THREE.Points(geo, new THREE.PointsMaterial({ map: sprite, size: 0.35, transparent: true, opacity: 0.5, depthWrite: false, blending: THREE.AdditiveBlending, color: 0xffd9a0 }));
     scene.add(fairy);
   })();
 
-  // ---------- Lighting rig ----------
-  scene.fog = new THREE.Fog(0xf0b58a, 90, 420);
-  var hemi = new THREE.HemisphereLight(0xffd7b0, 0x4a5a35, 0.35); scene.add(hemi);
+  // ---------- Global Lighting Rig ----------
+  scene.fog = new THREE.Fog(0x140e20, 90, 420);
+  var hemi = new THREE.HemisphereLight(0xffd7b0, 0x3b4d35, 0.35); scene.add(hemi);
   var sun = new THREE.DirectionalLight(0xff9a45, 2.0); sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
-  var sc = sun.shadow.camera; sc.left = -24; sc.right = 24; sc.top = 24; sc.bottom = -24; sc.near = 1; sc.far = 220; sun.shadow.bias = -0.0006;
+  var sc = sun.shadow.camera; sc.left = -26; sc.right = 26; sc.top = 24; sc.bottom = -24; sc.near = 1; sc.far = 220; sun.shadow.bias = -0.0006;
   scene.add(sun); scene.add(sun.target);
   var fill = new THREE.DirectionalLight(0xffc7a0, 0.45); fill.position.set(6, 10, 40); scene.add(fill);
-  var moon = new THREE.DirectionalLight(0x8da9fc, 0); moon.position.set(10, 25, -10); scene.add(moon);
-  var ambient = new THREE.AmbientLight(0xfff6eb, 0); scene.add(ambient);
-  var FOG_SUNSET = new THREE.Color(0xf0b58a), FOG_EVENING = new THREE.Color(0x1d1629).convertSRGBToLinear();
-  var mandapLight = new THREE.PointLight(0xffc27a, 0.6, 18, 1.6); mandapLight.position.set(0, 5.5, PZ + 2); scene.add(mandapLight);
-  var spotL = { intensity: 0 };
+  var moon = new THREE.DirectionalLight(0x9ab6ff, 0); moon.position.set(8, 26, 12); scene.add(moon);
+  var ambient = new THREE.AmbientLight(0xf6f0ff, 0); scene.add(ambient);
+  var FOG_SUNSET = new THREE.Color(0xf0b58a), FOG_EVENING = new THREE.Color(0x110c1d).convertSRGBToLinear();
 
-  // ---------- Labels ----------
+  // ---------- Floating 3D Labels ----------
   var labelSprites = [];
   function label(text, x, y, z, scale) {
     var c = document.createElement("canvas"); c.width = 512; c.height = 128;
     var g = c.getContext("2d");
-    g.font = "56px Marcellus, Georgia, serif"; g.textAlign = "center"; g.textBaseline = "middle";
-    var w = g.measureText(text).width + 60;
-    g.fillStyle = "rgba(30,10,16,0.72)"; g.strokeStyle = "rgba(255,190,110,0.6)"; g.lineWidth = 3;
+    g.font = "52px Marcellus, Georgia, serif"; g.textAlign = "center"; g.textBaseline = "middle";
+    var w = g.measureText(text).width + 64;
+    g.fillStyle = "rgba(18,12,28,0.76)"; g.strokeStyle = "rgba(245,182,66,0.65)"; g.lineWidth = 3;
     g.beginPath(); g.moveTo(256 - w / 2 + 20, 24); g.lineTo(256 + w / 2 - 20, 24); g.quadraticCurveTo(256 + w / 2, 24, 256 + w / 2, 44); g.lineTo(256 + w / 2, 84); g.quadraticCurveTo(256 + w / 2, 104, 256 + w / 2 - 20, 104); g.lineTo(256 - w / 2 + 20, 104); g.quadraticCurveTo(256 - w / 2, 104, 256 - w / 2, 84); g.lineTo(256 - w / 2, 44); g.quadraticCurveTo(256 - w / 2, 24, 256 - w / 2 + 20, 24); g.fill(); g.stroke();
     g.fillStyle = "#ffcf85"; g.fillText(text, 256, 66);
     var t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding;
     var s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false, transparent: true }));
     s.position.set(x, y, z); s.scale.set(scale * 4, scale, 1); s.renderOrder = 10; scene.add(s); labelSprites.push(s);
   }
-  label("STAGE", 0, 9.3, PZ, 1.0);
-  label("SITTING", 0, 2.4, 4, 1.0);
-  label("ENTRY", -16, 4.8, 15.5, 0.9);
+  label("CENTER STAGE", 0, 8.2, PZ, 1.0);
+  label("LEFT WING", -7.4, 8.2, PZ, 0.88);
+  label("RIGHT WING", 7.4, 8.2, PZ, 0.88);
+  label("AISLE & SEATING", 0, 2.3, 3.5, 0.95);
+  label("ENTRY", -17, 4.8, 15.5, 0.9);
 
-  // entry arrow on the floor
+  // Entry arrow on the floor
   (function arrow() {
     var shape = new THREE.Shape(); shape.moveTo(0, -0.25); shape.lineTo(2.0, -0.25); shape.lineTo(2.0, -0.7); shape.lineTo(3.2, 0); shape.lineTo(2.0, 0.7); shape.lineTo(2.0, 0.25); shape.lineTo(0, 0.25); shape.closePath();
-    var m = new THREE.Mesh(new THREE.ShapeGeometry(shape), new THREE.MeshBasicMaterial({ color: 0xffa31f, transparent: true, opacity: 0.85 }));
-    m.rotation.x = -Math.PI / 2; m.position.set(-19.5, 0.03, 15.5); scene.add(m); labelSprites.push(m);
+    var m = new THREE.Mesh(new THREE.ShapeGeometry(shape), new THREE.MeshBasicMaterial({ color: 0xf5b642, transparent: true, opacity: 0.85 }));
+    m.rotation.x = -Math.PI / 2; m.position.set(-20.5, 0.03, 15.5); scene.add(m); labelSprites.push(m);
   })();
 
-  // ---------- Camera presets and animation ----------
+  // ---------- Camera Presets and Animation ----------
   var VIEWS = {
-    overview: { p: [0, 12, 34], t: [0, 3, -12] },
-    entry: { p: [-14.4, 1.7, 15.5], t: [0, 2.6, -10] },
-    guest: { p: [-4.5, 1.25, 7.5], t: [0, 3.6, -14] },
-    stage: { p: [0, 2.55, -2.6], t: [0, 3.3, -14.5] },
-    canopy: { p: [0, 1.9, -11.6], t: [0, 6.2, -14.2] },
-    top: { p: [0, 48, 0.01], t: [0, 0, 0] }
+    overview:  { p: [0, 9.5, 25],     t: [0, 3.5, -14] },
+    entry:     { p: [-15.2, 1.8, 15.5], t: [0, 3.2, -12] },
+    guest:     { p: [0, 1.75, 4.2],   t: [0, 3.5, -14.5] },
+    stage:     { p: [0, 2.35, -4.2],  t: [0, 2.8, -14.8] },
+    leftWing:  { p: [-5.8, 2.35, -3.2], t: [-6.6, 3.4, -15.0] },
+    rightWing: { p: [5.8, 2.35, -3.2],  t: [6.6, 3.4, -15.0] },
+    canopy:    { p: [0, 2.2, -7.8],   t: [0, 5.6, -15.2] },
+    top:       { p: [0, 48, 0.01],    t: [0, 0, -2] }
   };
   var fly = null, tour = null, spin = false;
   function ease(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+  function stopSpin() { spin = false; document.getElementById("tSpin").setAttribute("aria-pressed", "false"); }
   function flyTo(v, dur) {
+    stopSpin();
     tour = null;
     fly = { t0: performance.now(), dur: (dur || 1.6) * 1000, p0: camera.position.clone(), t0v: controls.target.clone(), p1: new THREE.Vector3().fromArray(v.p), t1: new THREE.Vector3().fromArray(v.t) };
   }
-  var tourPos = new THREE.CatmullRomCurve3([[-14.8, 1.7, 15.5], [-9, 1.7, 15], [-2, 1.7, 12.5], [0, 1.7, 8], [0, 1.9, 0], [0, 2.3, -6], [0, 2.6, -8.2]].map(function (a) { return new THREE.Vector3().fromArray(a); }));
-  var tourTgt = new THREE.CatmullRomCurve3([[-8, 1.7, 15.2], [0, 1.9, 10], [0, 2.6, 0], [0, 3.4, -10], [0, 3.8, -14], [0, 3.8, -14], [0, 3.9, -14]].map(function (a) { return new THREE.Vector3().fromArray(a); }));
-  function startTour() { fly = null; tour = { t0: performance.now(), dur: 26000 }; }
+  var tourPos = new THREE.CatmullRomCurve3([
+    [-15.5, 1.8, 15.5],
+    [-6.0, 1.8, 13.5],
+    [0, 1.75, 7.5],
+    [0, 1.9, -1.5],
+    [-6.2, 2.35, -3.6],
+    [0, 2.35, -4.4],
+    [6.2, 2.35, -3.6],
+    [0, 3.4, 4.5]
+  ].map(function (a) { return new THREE.Vector3().fromArray(a); }));
+  var tourTgt = new THREE.CatmullRomCurve3([
+    [-6, 2.2, 12],
+    [0, 2.8, -6],
+    [0, 3.4, -14.5],
+    [0, 3.4, -14.8],
+    [-6.8, 3.5, -15.0],
+    [0, 2.9, -14.8],
+    [6.8, 3.5, -15.0],
+    [0, 3.5, -14.5]
+  ].map(function (a) { return new THREE.Vector3().fromArray(a); }));
+  function startTour() { stopSpin(); fly = null; tour = { t0: performance.now(), dur: reduce ? 1 : 28000 }; }
   controls.addEventListener("start", function () { fly = null; tour = null; spin = false; document.getElementById("tSpin").setAttribute("aria-pressed", "false"); setActive(null); });
 
   var viewBtns = Array.prototype.slice.call(document.querySelectorAll("#views button"));
@@ -837,29 +1130,39 @@
   if (window.matchMedia("(max-width: 720px)").matches) { opts.classList.add("closed"); optToggle.setAttribute("aria-expanded", "false"); }
   optToggle.addEventListener("click", function () { var c = opts.classList.toggle("closed"); optToggle.setAttribute("aria-expanded", String(!c)); });
 
-  // ---------- Floor-plan map (mirrors the sketch) ----------
+  // ---------- Floor-Plan Mini-Map ----------
   var mapC = document.getElementById("mapCanvas"), mg = mapC.getContext("2d");
   function mx(x) { return (x + HALL_W / 2) / HALL_W * mapC.width; }
   function mz(z) { return (z + HALL_D / 2) / HALL_D * mapC.height; }
   function drawMap() {
     var W = mapC.width, H = mapC.height;
     mg.clearRect(0, 0, W, H);
-    mg.strokeStyle = "rgba(255,200,130,0.8)"; mg.lineWidth = 3; mg.strokeRect(2, 2, W - 4, H - 4);
+    mg.strokeStyle = "rgba(245,195,120,0.8)"; mg.lineWidth = 3; mg.strokeRect(2, 2, W - 4, H - 4);
     mg.clearRect(0, mz(DOOR.z0), 8, mz(DOOR.z1) - mz(DOOR.z0));
-    mg.fillStyle = "rgba(200,16,46,0.55)"; mg.fillRect(mx(-5.3), mz(PZ - 4.2), mx(5.3) - mx(-5.3), mz(PZ + 4.2) - mz(PZ - 4.2)); mg.strokeRect(mx(-5.3), mz(PZ - 4.2), mx(5.3) - mx(-5.3), mz(PZ + 4.2) - mz(PZ - 4.2));
-    mg.fillStyle = "rgba(244,234,216,0.35)"; mg.fillRect(mx(-8), mz(-2.6), mx(8) - mx(-8), mz(9.4) - mz(-2.6)); mg.lineWidth = 2; mg.strokeRect(mx(-8), mz(-2.6), mx(8) - mx(-8), mz(9.4) - mz(-2.6));
-    mg.fillStyle = "#ffcf85"; mg.font = "20px sans-serif"; mg.textAlign = "center";
-    mg.fillText("stage", mx(0), mz(STAGE.z) + 7); mg.fillText("sitting", mx(0), mz(3.4) + 7); mg.fillText("entry ➜", mx(-9.5), mz(16) + 4);
-    // camera marker with look direction
+    // Wide 5-bay panoramic stage rectangle
+    var sx0 = mx(-MSTAGE_W / 2), sx1 = mx(MSTAGE_W / 2), sz0 = mz(PZ - MSTAGE_D / 2), sz1 = mz(PZ + MSTAGE_D / 2);
+    mg.fillStyle = "rgba(105, 172, 235, 0.55)"; mg.fillRect(sx0, sz0, sx1 - sx0, sz1 - sz0);
+    mg.strokeStyle = "#ec6aa0"; mg.lineWidth = 2; mg.strokeRect(sx0, sz0, sx1 - sx0, sz1 - sz0);
+    // Golden-yellow aisle strip
+    mg.fillStyle = "rgba(235, 188, 38, 0.55)"; mg.fillRect(mx(-1.7), sz1, mx(1.7) - mx(-1.7), mz(16.5) - sz1);
+    // Guest seating blocks
+    mg.fillStyle = "rgba(244,234,216,0.28)";
+    mg.fillRect(mx(-9.8), mz(-2.2), mx(-2.6) - mx(-9.8), mz(10.0) - mz(-2.2));
+    mg.fillRect(mx(2.6), mz(-2.2), mx(9.8) - mx(2.6), mz(10.0) - mz(-2.2));
+    mg.fillStyle = "#ffcf85"; mg.font = "18px sans-serif"; mg.textAlign = "center";
+    mg.fillText("5-bay stage", mx(0), mz(STAGE.z) + 6);
+    mg.fillText("aisle", mx(0), mz(4.0) + 6);
+    mg.fillText("entry ➜", mx(-9.5), mz(16) + 4);
+    // Camera marker with look direction
     var x = mx(camera.position.x), z = mz(camera.position.z);
     var dir = new THREE.Vector3(); camera.getWorldDirection(dir);
     var ang = Math.atan2(dir.z, dir.x);
-    mg.fillStyle = "#ffa31f";
-    mg.beginPath(); mg.moveTo(x, z); mg.arc(x, z, 36, ang - 0.45, ang + 0.45); mg.closePath(); mg.globalAlpha = 0.45; mg.fill(); mg.globalAlpha = 1;
-    mg.beginPath(); mg.arc(x, z, 6, 0, 6.283); mg.fill();
+    mg.fillStyle = "#f5b642";
+    mg.beginPath(); mg.moveTo(x, z); mg.arc(x, z, 34, ang - 0.45, ang + 0.45); mg.closePath(); mg.globalAlpha = 0.45; mg.fill(); mg.globalAlpha = 1;
+    mg.beginPath(); mg.arc(x, z, 5.5, 0, 6.283); mg.fill();
   }
 
-  // ---------- Resize + loop ----------
+  // ---------- Resize + Render Loop ----------
   window.addEventListener("resize", function () {
     camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight);
   });
@@ -872,11 +1175,11 @@
       camera.position.lerpVectors(fly.p0, fly.p1, e); controls.target.lerpVectors(fly.t0v, fly.t1, e);
       if (k >= 1) fly = null;
     } else if (tour) {
-      var u = Math.min(1, (now - tour.t0) / tour.dur), ue = u < 0.05 ? u * u * 10 : u;
+      var u = Math.min(1, (now - tour.t0) / tour.dur), ue = ease(u);
       camera.position.copy(tourPos.getPoint(Math.min(1, ue))); controls.target.copy(tourTgt.getPoint(Math.min(1, ue)));
       if (u >= 1) tour = null;
     } else if (spin) {
-      var off = camera.position.clone().sub(controls.target); var a = dt * 0.18;
+      var off = camera.position.clone().sub(controls.target); var a = dt * 0.16;
       var cx = off.x * Math.cos(a) - off.z * Math.sin(a), cz = off.x * Math.sin(a) + off.z * Math.cos(a); off.x = cx; off.z = cz;
       camera.position.copy(controls.target).add(off);
     }
@@ -887,22 +1190,22 @@
     skyU.uDusk.value = na;
     var el = 0.09 - 0.17 * na; sunDir.set(-0.12, el, -1).normalize(); skyU.uSun.value.copy(sunDir);
     sun.position.copy(sunDir).multiplyScalar(110).add(new THREE.Vector3(0, 0, -10)); if (el < 0.02) sun.position.y = 2.5 + (el + 0.08) * 40;
-    sun.intensity = 2.0 * (1 - na); hemi.intensity = 0.35 - 0.27 * na;
-    fill.intensity = 0.45 * (1 - na); moon.intensity = 0.38 * na; ambient.intensity = 0.1 * na;
-    cloudMats.forEach(function (m) { m.opacity = m.userData.base * (1 - 0.75 * na); });
+    sun.intensity = 1.9 * (1 - na); hemi.intensity = 0.38 - 0.22 * na;
+    fill.intensity = 0.45 * (1 - na); moon.intensity = 0.42 * na; ambient.intensity = 0.18 * na;
+    cloudMats.forEach(function (m) { m.opacity = m.userData.base * (1 - 0.78 * na); });
     scene.environment = na > 0.5 ? envEvening : envSunset;
-    mandapLight.intensity = 0.6 + 1.6 * na;
     scene.fog.color.copy(FOG_SUNSET).lerp(FOG_EVENING, na);
-    renderer.toneMappingExposure = 0.85 + 0.2 * na;
+    renderer.toneMappingExposure = 0.85 + 0.18 * na;
     fairy.material.opacity = 0.45 + 0.5 * na; fairy.material.size = 0.35 + 0.12 * na;
 
     var el2 = now / 1000;
-    chandelierStrands.forEach(function (st) { st.group.rotation.z = Math.sin(el2 * 1.6 + st.phaseX) * st.amp; st.group.rotation.x = Math.cos(el2 * 1.25 + st.phaseZ) * st.amp * 0.7; });
-    bellStrands.forEach(function (b) { b.group.rotation.z = Math.sin(el2 * 2.1 + b.phase) * b.amp; b.group.rotation.x = Math.cos(el2 * 1.7 + b.phase) * b.amp * 0.65; });
-    swayingFoliage.forEach(function (r) { r.mesh.rotation.z = r.baseRotZ + Math.sin(el2 * 1.9 + r.phase) * 0.045; });
-    havanFlames.forEach(function (f) { var sy = 0.85 + Math.sin(el2 * 11 + f.phase) * 0.28, sxz = 0.9 + Math.cos(el2 * 9 + f.phase) * 0.15; f.mesh.scale.set(sxz, sy, sxz); f.mesh.rotation.z = Math.sin(el2 * 6.5 + f.phase) * 0.14; });
-    havanLight.intensity = (1.25 + Math.sin(el2 * 14) * 0.25 + Math.cos(el2 * 23) * 0.15) * (1 + na);
-    lampLights.forEach(function (l) { l.intensity = 0.45 + 1.4 * na; });
+    chandelierSwings.forEach(function (ch) {
+      ch.group.rotation.z = (reduce ? 0 : Math.sin(el2 * 1.3 + ch.phase) * ch.amp);
+      ch.group.rotation.x = (reduce ? 0 : Math.cos(el2 * 1.05 + ch.phase) * ch.amp * 0.6);
+    });
+    stageGlowLights.forEach(function (sl, idx) {
+      sl.light.intensity = sl.base * (0.45 + 0.95 * na) * (1 + Math.sin(el2 * 3.2 + idx) * 0.04);
+    });
 
     renderer.render(scene, camera);
     drawMap();
